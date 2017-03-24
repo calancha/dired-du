@@ -44,7 +44,7 @@
 ;;
 ;; -- Number of marked files and their size --
 ;;
-;; In ddition, this library adds a command, `dired-du-count-sizes',
+;; In addition, this library adds a command, `dired-du-count-sizes',
 ;; to count the number of marked files and how much space
 ;; they use; the command accepts a particular character mark
 ;; i.e., '*' or all kind of marks i.e, any character other than ?\s.
