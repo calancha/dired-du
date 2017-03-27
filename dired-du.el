@@ -7,10 +7,10 @@
 ;; Copyright (C) 2016-2017, Tino Calancha, all rights reserved.
 ;; Created: Wed Mar 23 22:54:00 2016
 ;; Version: 0.3.0
-;; Package-Requires: ((emacs "24.1") (cl-lib "0.5"))
-;; Last-Updated: Mon Mar 27 21:11:50 JST 2017
+;; Package-Requires: ((emacs "24.4") (cl-lib "0.5"))
+;; Last-Updated: Mon Mar 27 21:23:22 JST 2017
 ;;           By: calancha
-;;     Update #: 294
+;;     Update #: 295
 ;; Compatibility: GNU Emacs: 24.x
 ;; Keywords: files, unix, convenience
 ;;
