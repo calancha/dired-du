@@ -8,9 +8,9 @@
 ;; Created: Wed Mar 23 22:54:00 2016
 ;; Version: 0.3.0
 ;; Package-Requires: ((emacs "24.1") (cl-lib "0.5"))
-;; Last-Updated: Fri Mar 24 15:05:06 JST 2017
+;; Last-Updated: Mon Mar 27 21:11:50 JST 2017
 ;;           By: calancha
-;;     Update #: 293
+;;     Update #: 294
 ;; Compatibility: GNU Emacs: 24.x
 ;; Keywords: files, unix, convenience
 ;;
@@ -145,7 +145,7 @@
   :prefix "dired-du-"
   :group 'dired-du)
 
-(defvar-local dired-du-dir-info nil
+(defvar dired-du-dir-info nil
   "Alist of cached (DIRNAME . DIR-INFO) in Dired buffer.
 DIRNAME is a subdirectory in the DIRED buffer.
 
@@ -157,12 +157,14 @@ element is an alist:
 The size of the directories is the recursive size obtained with
 `dired-du-used-space-program'.  The size of the entries
 '.' and '..' is not changed.")
+(make-variable-buffer-local 'dired-du-dir-info)
 
-(defvar-local dired-du-mode nil
+(defvar dired-du-mode nil
   "Variable saving the status of `dired-du-mode'.
 If this variable evaluates non-nil, then show recursive size
 for directories in the Dired buffer.  This variable is also used
 as default value for INCLUDE-DIRS in `dired-du-count-sizes'.")
+(make-variable-buffer-local 'dired-du-mode)
 
 (put 'dired-du-mode 'permanent-local t)
 
@@ -206,11 +208,12 @@ The format to display the file sizes is control by
 `dired-du-size-format'."
   :type 'boolean :group 'dired-du)
 
-(defvar-local dired-du-find-dired-buffer nil
+(defvar dired-du-find-dired-buffer nil
   "Non-nil if current buffer is a `find-dired' buffer.
 When `dired-du-on-find-dired-ok' evaluates non-nil, then this
 buffer show recursive dir sizes with format according with
 `dired-du-size-format' if dired-du-mode is enable.")
+(make-variable-buffer-local 'dired-du-find-dired-buffer)
 
 (defcustom dired-du-update-headers nil
   "If Non-nil, update the subdir headers.
