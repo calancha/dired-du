@@ -8,10 +8,10 @@
 ;; Created: Wed Mar 23 22:54:00 2016
 ;; Version: 0.3.0
 ;; Package-Requires: ((emacs "24.4") (cl-lib "0.5"))
-;; Last-Updated: Mon Mar 27 21:23:22 JST 2017
+;; Last-Updated: Fri Apr 21 11:22:32 JST 2017
 ;;           By: calancha
-;;     Update #: 295
-;; Compatibility: GNU Emacs: 24.x
+;;     Update #: 296
+;; Compatibility: GNU Emacs: 24.4
 ;; Keywords: files, unix, convenience
 ;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
