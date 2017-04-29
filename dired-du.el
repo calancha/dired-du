@@ -8,9 +8,9 @@
 ;; Created: Wed Mar 23 22:54:00 2016
 ;; Version: 0.3.0
 ;; Package-Requires: ((emacs "24.4") (cl-lib "0.5"))
-;; Last-Updated: Fri Apr 21 11:22:32 JST 2017
+;; Last-Updated: Sat Apr 29 22:44:46 JST 2017
 ;;           By: calancha
-;;     Update #: 296
+;;     Update #: 297
 ;; Compatibility: GNU Emacs: 24.4
 ;; Keywords: files, unix, convenience
 ;;
@@ -52,8 +52,9 @@
 ;;
 ;;  Internal variables defined here:
 ;;
-;;   `dired-du-filesp-subdir-header', `dired-du-local-subdir-header',
-;;   `dired-du-remote-subdir-header'.
+;;   `dired-du-dir-info', `dired-du-filesp-subdir-header',
+;;   `dired-du-find-dired-buffer', `dired-du-local-subdir-header',
+;;   `dired-du-mode', `dired-du-remote-subdir-header'.
 ;;
 ;;  Coustom variables defined here:
 ;;
@@ -184,7 +185,7 @@ A value of nil disables this feature."
   :type '(list (string :tag "Program")
                (repeat :tag "Options"
                        :inline t
-                       (stting :format "%v")))
+                       (string :format "%v")))
   :group 'dired-du)
 
 (defcustom dired-du-size-format t
