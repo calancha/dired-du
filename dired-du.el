@@ -8,9 +8,9 @@
 ;; Created: Wed Mar 23 22:54:00 2016
 ;; Version: 0.4
 ;; Package-Requires: ((emacs "24.4") (cl-lib "0.5"))
-;; Last-Updated: Sun Apr 30 12:20:02 JST 2017
+;; Last-Updated: Sun Apr 30 12:54:00 JST 2017
 ;;           By: calancha
-;;     Update #: 299
+;;     Update #: 300
 ;; Compatibility: GNU Emacs: 24.4
 ;; Keywords: files, unix, convenience
 ;;
@@ -186,6 +186,9 @@ A value of nil disables this feature."
                                :inline t
                                (string :format "%v"))))
   :group 'dired-du)
+
+(defvar dired-du--user-warned (and dired-du-used-space-program t)
+  "Nil if the user must be warned about `dired-du-used-space-program' being nil.")
 
 (defcustom dired-du-size-format t
   "Set the format for file sizes.
@@ -1955,7 +1958,9 @@ and disable it once you have finished checking the used space."
            (error "Major mode not dired-mode"))
           (t
            (cond (mode-on
-                  (unless dired-du-used-space-program
+                  (when (and (null dired-du-used-space-program)
+                             (null dired-du--user-warned))
+                    (setq dired-du--user-warned t)
                     (beep)
                     (message "Program `dired-du-used-space-program' not found.
 Fallback to calculate recursive dir size in Lisp.
@@ -2066,7 +2071,9 @@ If arg INCLUDE-DIRS, if non-nil, then include the directory sizes."
              (not (equal 0 (condition-case nil
                                (process-file (car dired-du-used-space-program)
                                              nil nil nil null-device)
-                             (error nil)))))
+                             (error nil))))
+             (null dired-du--user-warned))
+    (setq dired-du--user-warned t)
     (beep)
     (message "Program `dired-du-used-space-program' not found.
 Fallback to calculate recursive dir size in Lisp.
