@@ -6,11 +6,11 @@
 ;; Maintainer: Tino Calancha <tino.calancha@gmail.com>
 ;; Copyright (C) 2016-2017, Tino Calancha, all rights reserved.
 ;; Created: Wed Mar 23 22:54:00 2016
-;; Version: 0.3.0
+;; Version: 0.4
 ;; Package-Requires: ((emacs "24.4") (cl-lib "0.5"))
-;; Last-Updated: Sun Apr 30 12:00:15 JST 2017
+;; Last-Updated: Sun Apr 30 12:20:02 JST 2017
 ;;           By: calancha
-;;     Update #: 298
+;;     Update #: 299
 ;; Compatibility: GNU Emacs: 24.4
 ;; Keywords: files, unix, convenience
 ;;
@@ -172,20 +172,19 @@ as default value for INCLUDE-DIRS in `dired-du-count-sizes'.")
 (defcustom dired-du-used-space-program
   (purecopy (let ((opts (if (string-prefix-p "gnu" (symbol-name system-type))
                             "-sb"
-                          "-sk"))) ; -k overestimate used space
-                                   ; for files w/ size < 1024
+                          "-sk"))) ; -k overestimate used space for files w/ size < 1024
               (cond ((executable-find "du") (list "du" opts))
                     ((file-executable-p "/usr/sbin/du")
                      (list "/usr/sbin/du" opts))
-                    ((file-executable-p "/etc/du") (list "/etc/du" opts))
-                    (t (list "du" opts)))))
+                    ((file-executable-p "/etc/du") (list "/etc/du" opts)))))
   "Program and its options to get recursively the total size of a directory.
 We assume the output has the format of `du'.
 A value of nil disables this feature."
-  :type '(list (string :tag "Program")
-               (repeat :tag "Options"
-                       :inline t
-                       (string :format "%v")))
+  :type '(choice (const :tag "Unset" nil)
+                 (list (string :tag "Program")
+                       (repeat :tag "Options"
+                               :inline t
+                               (string :format "%v"))))
   :group 'dired-du)
 
 (defcustom dired-du-size-format t
@@ -610,10 +609,23 @@ If there is not a directory in the current line return nil."
     (let ((dir-rel (dired-get-filename t 'noerror))
           (size    0))
       (with-temp-buffer
-        (process-file (car dired-du-used-space-program)
-                      nil t nil
-                      (cadr dired-du-used-space-program)
-                      dir-rel)
+        (if dired-du-used-space-program
+            (process-file (car dired-du-used-space-program)
+                          nil t nil
+                          (cadr dired-du-used-space-program)
+                          dir-rel)
+          ;; `du' not available: obtain the size with Lisp.
+          (require 'find-lisp)
+          (with-no-warnings
+            (let* ((files (find-lisp-find-files dir-rel ""))
+                   (tmp (if (null files)
+                            0
+                          (apply #'+ (mapcar
+                                      (lambda (f)
+                                        (file-attribute-size
+                                         (file-attributes f)))
+                                      files)))))
+              (insert (format "%d" tmp)))))
         (goto-char 1)
         (while (re-search-forward "^[0-9]+" nil t)
           (setq size (+ size (string-to-number (match-string 0)))))) size)))
@@ -1737,7 +1749,13 @@ Return file info for current subdir."
                                 (not (member x '("." "..")))))
                          all-subdir-dirs)))
                    (when missing-dirs
-                     (dired-du-get-recursive-dir-size-in-parallel missing-dirs)))))
+                     (if dired-du-used-space-program
+                         (dired-du-get-recursive-dir-size-in-parallel missing-dirs)
+                       (let (res)
+                         (save-excursion
+                           (dolist (d missing-dirs)
+                             (dired-goto-file (expand-file-name d default-directory))
+                             (push (list d (dired-du-get-recursive-dir-size)) res)))))))))
            (dir-counter 0)
            (collect-str "Dired-Du collecting file info ...")
            (rep-coll
@@ -1935,17 +1953,20 @@ and disable it once you have finished checking the used space."
         (mode-on     dired-du-mode))
     (cond ((not (derived-mode-p 'dired-mode))
            (error "Major mode not dired-mode"))
-          ((null dired-du-used-space-program)
-           (error "Program `dired-du-used-space-program' not found"))
           (t
            (cond (mode-on
+                  (unless dired-du-used-space-program
+                    (beep)
+                    (message "Program `dired-du-used-space-program' not found.
+Fallback to calculate recursive dir size in Lisp.
+Please, consider install a 'du' executable suitable to your platform.")
+                    (sit-for 1)
+                    (message nil))
                   (message "Initializing Dired-Du mode ...")
                   (dired-du--replace)
-                  ;; (message "%s in current buffer" enable-str))
                   (message "%s in Dired buffers" enable-str))
                  (t
                   (dired-revert)
-                  ;; (message "%s in current buffer" disable-str)))))))
                   (message "%s in Dired buffers" disable-str)))))))
 
 (define-key dired-mode-map (kbd "C-x M-r") 'dired-du-mode)
@@ -2046,7 +2067,12 @@ If arg INCLUDE-DIRS, if non-nil, then include the directory sizes."
                                (process-file (car dired-du-used-space-program)
                                              nil nil nil null-device)
                              (error nil)))))
-    (error "Program `dired-du-used-space-program' not found"))
+    (beep)
+    (message "Program `dired-du-used-space-program' not found.
+Fallback to calculate recursive dir size in Lisp.
+Please, consider install a 'du' executable suitable to your platform.")
+    (sit-for 1)
+    (message nil))
   (if (eq mark ?\r)
       (progn
         (message "Mark cannot be \\r")
@@ -2093,7 +2119,9 @@ If arg INCLUDE-DIRS, if non-nil, then include the directory sizes."
         ;; Add recursive size of directories
         (when (and include-dirs
                    (not (= num-dirs 0)))
-          (let ((scale-factor (if (string= (cadr dired-du-used-space-program) "-sk")
+          (let ((scale-factor
+                 (if (and dired-du-used-space-program
+                          (string= (cadr dired-du-used-space-program) "-sk"))
                                   1024.0
                                 1.0)))
             (cond (dir-info ; Cache size dir
@@ -2178,7 +2206,7 @@ INCLUDE-DIRS is set to (not `dired-du-mode')."
           ;; If `dired-du-mode' is enabled include dirs; otherwise prompt user.
           (dirs (or dired-du-mode
                     (and askme
-                         (car dired-du-used-space-program)
+                         ;; (car dired-du-used-space-program)
                          (y-or-n-p "Include directories? ")))))
      (list mark all-marks dirs askme)))
   (dired-du-assert-dired-mode)
