@@ -8,9 +8,9 @@
 ;; Created: Wed Mar 23 22:54:00 2016
 ;; Version: 0.3.0
 ;; Package-Requires: ((emacs "24.4") (cl-lib "0.5"))
-;; Last-Updated: Sat Apr 29 22:44:46 JST 2017
+;; Last-Updated: Sun Apr 30 12:00:15 JST 2017
 ;;           By: calancha
-;;     Update #: 297
+;;     Update #: 298
 ;; Compatibility: GNU Emacs: 24.4
 ;; Keywords: files, unix, convenience
 ;;
@@ -84,11 +84,11 @@
 ;;   `dired-du--get-position-1', `dired-du--get-value',
 ;;   `dired-du--global-update-dir-info', `dired-du--initialize',
 ;;   `dired-du--insert-subdir', `dired-du--local-update-dir-info',
-;;   `dired-du--replace', `dired-du--replace-1',
-;;   `dired-du--reset', `dired-du--revert',
-;;   `dired-du--subdir-position', `dired-du--update-subdir-header',
-;;   `dired-du--update-subdir-header-1', `dired-du-alist-get',
-;;   `dired-du-directory-at-current-line-p',
+;;   `dired-du--number-as-string-p', `dired-du--replace',
+;;   `dired-du--replace-1', `dired-du--reset',
+;;   `dired-du--revert', `dired-du--subdir-position',
+;;   `dired-du--update-subdir-header', `dired-du--update-subdir-header-1',
+;;   `dired-du-alist-get', `dired-du-directory-at-current-line-p',
 ;;   `dired-du-distinguish-one-marked',
 ;;   `dired-du-filename-relative-to-default-dir',
 ;;   `dired-du-get-all-directories', `dired-du-get-all-files',
@@ -1699,6 +1699,11 @@ If '.' and '..' are present in the buffer, then include them as well."
 
 ;;; Insert recursive dir size on Dired buffer.
 
+(defun dired-du--number-as-string-p (str)
+  (or (string= str "0")
+      (and (not (string= str "0"))
+           (/= 0 (string-to-number str)))))
+
 (defun dired-du--replace-1 (&optional glob-pos)
   "Replace recursive directory size on Dired buffer.
 Optional arg GLOB-POS, if non-nil, is the entry in
@@ -1802,12 +1807,20 @@ Return file info for current subdir."
                                                   num-blanks-human)
                                                  ((null dired-du-size-format)
                                                   num-blanks)
-                                                 (t num-blanks-comma)))))
+                                                 (t num-blanks-comma))))
+                      gid-start gid-end)
                   (skip-chars-forward "^ \t")
                   (skip-chars-backward "^ \t")
-                  (skip-chars-backward " \t") ; gid end
-                  (skip-chars-backward "^ \t") ; gid start
-                  (forward-char max-gid-len)
+                  (skip-chars-backward " \t")
+                  (setq gid-end (point))
+                  (skip-chars-backward "^ \t")
+                  (setq gid-start (point))
+                  ;; With numeric GID, the column is right indented; otherwise,
+                  ;; the column is left indented.
+                  (if (not (dired-du--number-as-string-p
+                            (buffer-substring-no-properties gid-start gid-end)))
+                      (forward-char max-gid-len)
+                    (goto-char gid-end))
                   (delete-region (point) pos)
                   (insert (format fmt (cond ((eq t dired-du-size-format)
                                              (file-size-human-readable
