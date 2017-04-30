@@ -8,9 +8,9 @@
 ;; Created: Wed Mar 23 22:54:00 2016
 ;; Version: 0.4
 ;; Package-Requires: ((emacs "24.4") (cl-lib "0.5"))
-;; Last-Updated: Sun Apr 30 12:54:00 JST 2017
+;; Last-Updated: Sun Apr 30 21:23:03 JST 2017
 ;;           By: calancha
-;;     Update #: 300
+;;     Update #: 301
 ;; Compatibility: GNU Emacs: 24.4
 ;; Keywords: files, unix, convenience
 ;;
@@ -22,7 +22,10 @@
 ;;
 ;; This file defines a minor mode `dired-du-mode' to show
 ;; the recursive size of directories in Dired buffers.
-;; The directory sizes are obtained with the `du' program.
+;; If `du' program is available, then the directory sizes are
+;; obtained with it.  Otherwise, the directory sizes are obtained
+;; with Lisp.  The former is much faster.
+;; 
 ;; Once this mode is enabled, every new Dired buffer displays
 ;; recursive dir sizes.
 ;;
