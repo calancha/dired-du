@@ -8,9 +8,9 @@
 ;; Created: Wed Mar 23 22:54:00 2016
 ;; Version: 0.4
 ;; Package-Requires: ((emacs "24.4") (cl-lib "0.5"))
-;; Last-Updated: Tue May 02 14:53:19 JST 2017
+;; Last-Updated: Tue May 02 14:55:44 JST 2017
 ;;           By: calancha
-;;     Update #: 303
+;;     Update #: 304
 ;; Compatibility: GNU Emacs: 24.4
 ;; Keywords: files, unix, convenience
 ;;
@@ -1071,33 +1071,43 @@ To return the recursive size of directories use
 
 ;;; Mark/Unmark subdirs or whole buffer (including "." and "..").
 
-(defun dired-du-mark-subdir-files (&optional mark)
+(defun dired-du-mark-subdir-files (&optional mark must-exist)
   "Mark all files in current subdirectory.
 Optional arg MARK, if non-nil, then is the character mark used.
 Otherwise use `dired-marker-char'.
+Optional arg MUST-EXIST, if non-nil, hide non-existant files.
 
 Directories '.' and '..' are also marked."
   (save-restriction
     (narrow-to-region (dired-subdir-min)
                       (dired-subdir-max))
-    (dired-du-mark-buffer mark)))
+    (dired-du-mark-buffer mark must-exist)))
 
-(defun dired-du-mark-buffer (&optional mark)
+(defun dired-du-mark-buffer (&optional mark must-exist)
   "Mark all files in the Dired buffer.
 Optional arg MARK, if non-nil, then is the character mark used.
 Otherwise use `dired-marker-char'.
+Optional arg MUST-EXIST, if non-nil, hide non-existant files.
 
 Directories '.' and '..' are also marked."
-  (let ((dired-marker-char (or mark dired-marker-char)))
-    (save-excursion
-      (dired-mark-files-in-region (point-min) (point-max))
-      ;; Handle '.' and '..'
-      (let ((inhibit-read-only t))
-        (goto-char (point-min))
-        (while (re-search-forward dired-re-dot (point-max) t)
-          (goto-char (line-beginning-position))
-          (delete-char 1)
-          (insert dired-marker-char))))))
+       (let ((dired-marker-char (or mark dired-marker-char)))
+         (save-excursion
+           (dired-mark-files-in-region (point-min) (point-max))
+           ;; Handle '.' and '..'
+           (let ((inhibit-read-only t))
+             (goto-char (point-min))
+             (while (re-search-forward dired-re-dot (point-max) t)
+               (goto-char (line-beginning-position))
+               (delete-char 1)
+               (insert dired-marker-char))))
+         (when (and must-exist (not (eq dired-marker-char ?\s)))
+           (dired-du-map-over-marks
+            (let ((file (dired-get-filename t t))
+                  (inhibit-read-only t))
+              (when (and file (not (file-exists-p file)))
+                (delete-region (line-beginning-position)
+			                   (progn (forward-line 1) (point)))))
+            nil) nil)))
 
 (defun dired-du-unmark-buffer (&optional mark)
   "Remove MARK from all files in the Dired buffer.
@@ -1182,7 +1192,7 @@ Optional arg FILE-INFO, if non-nil, is the file info for SUBDIR files."
                                  (delq nil
                                        (dired-du-with-saved-marks
                                          (save-excursion
-                                           (dired-du-mark-subdir-files)
+                                           (dired-du-mark-subdir-files nil 'must-exist)
                                            (dired-du-map-over-marks
                                             (funcall fn) nil nil nil))))))
                          (let ((size
@@ -1333,7 +1343,7 @@ Return nil."
       (dired-du-with-saved-marks
         (save-excursion
           (dired-du-unmark-buffer)
-          (dired-du-mark-subdir-files)
+          (dired-du-mark-subdir-files nil 'must-exist)
           (dired-du-map-over-marks (funcall fn) nil nil nil))))
     (setcar max-lens max-size-len)
     (setcdr max-lens (list max-size-human-len
@@ -1474,7 +1484,7 @@ Optional arg, HUMAN-READABLE has the same mean as
                   (dired-du-with-saved-marks
                     (save-excursion
                       (dired-du-unmark-buffer)
-                      (dired-du-mark-subdir-files)
+                      (dired-du-mark-subdir-files nil 'must-exist)
                       (dired-du-map-over-marks (funcall fn) nil nil nil))))))
             (progress-reporter-done prep))))) res))
 
@@ -1744,11 +1754,16 @@ Return file info for current subdir."
            (cur-subdir        (let ((info (nth glob-pos dired-du-dir-info)))
                                 (cond ((listp info) (car info))
                                       (t info))))
-           (all-dirs            (dired-du-get-all-directories))
-           (all-files           (dired-du-get-all-files))
+           ;; All files/dirs must exist, otherwise will fail in '/proc'.
+           (all-dirs            (cl-delete-if-not #'file-exists-p
+                                                  (dired-du-get-all-directories)))
+           (all-files           (cl-delete-if-not #'file-exists-p
+                                                  (dired-du-get-all-files)))
            (num-tot-files       (length all-files))
            (num-tot-dirs        (length all-dirs))
-           (all-subdir-dirs     (dired-du-get-all-subdir-directories 'local))
+           (all-subdir-dirs     (cl-delete-if-not
+                                 #'file-exists-p
+                                 (dired-du-get-all-subdir-directories 'local)))
            ;; Collect all directories not in `dired-du-dir-info' and process them in parallel.
            (subdir-dirname-size
             (and dired-du-mode
@@ -1799,7 +1814,7 @@ Return file info for current subdir."
                       (when cur-subdir
                         (dired-du-with-saved-marks
                           (save-excursion
-                            (dired-du-mark-subdir-files) ; Al files
+                            (dired-du-mark-subdir-files nil 'must-exist) ; Al files
                             (dired-du-map-over-marks (funcall fn) nil nil nil)))))
                 nblanks-gidlen    (dired-du--get-num-extra-blanks file-info)
                 num-blanks        (nth 0 nblanks-gidlen)
