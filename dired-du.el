@@ -8,9 +8,9 @@
 ;; Created: Wed Mar 23 22:54:00 2016
 ;; Version: 0.4
 ;; Package-Requires: ((emacs "24.4") (cl-lib "0.5"))
-;; Last-Updated: Tue May 02 14:46:01 JST 2017
+;; Last-Updated: Tue May 02 14:53:19 JST 2017
 ;;           By: calancha
-;;     Update #: 302
+;;     Update #: 303
 ;; Compatibility: GNU Emacs: 24.4
 ;; Keywords: files, unix, convenience
 ;;
@@ -624,7 +624,10 @@ If there is not a directory in the current line return nil."
           ;; `du' not available: obtain the size with Lisp.
           (require 'find-lisp)
           (with-no-warnings
-            (let* ((files (find-lisp-find-files dir-rel ""))
+            ;; Ignore permission denied errors.  This shows '0' size
+            ;; for directories we cannot open, regardless of their real size.
+            (let* ((files (ignore-errors
+                            (find-lisp-find-files dir-rel "")))
                    (tmp (if (null files)
                             0
                           (apply #'+ (mapcar
