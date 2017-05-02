@@ -8,9 +8,9 @@
 ;; Created: Wed Mar 23 22:54:00 2016
 ;; Version: 0.4
 ;; Package-Requires: ((emacs "24.4") (cl-lib "0.5"))
-;; Last-Updated: Sun Apr 30 21:23:03 JST 2017
+;; Last-Updated: Tue May 02 14:46:01 JST 2017
 ;;           By: calancha
-;;     Update #: 301
+;;     Update #: 302
 ;; Compatibility: GNU Emacs: 24.4
 ;; Keywords: files, unix, convenience
 ;;
@@ -55,9 +55,10 @@
 ;;
 ;;  Internal variables defined here:
 ;;
-;;   `dired-du-dir-info', `dired-du-filesp-subdir-header',
-;;   `dired-du-find-dired-buffer', `dired-du-local-subdir-header',
-;;   `dired-du-mode', `dired-du-remote-subdir-header'.
+;;   `dired-du--user-warned', `dired-du-dir-info',
+;;   `dired-du-filesp-subdir-header', `dired-du-find-dired-buffer',
+;;   `dired-du-local-subdir-header', `dired-du-mode',
+;;   `dired-du-remote-subdir-header'.
 ;;
 ;;  Coustom variables defined here:
 ;;
