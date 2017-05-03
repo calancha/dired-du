@@ -8,9 +8,9 @@
 ;; Created: Wed Mar 23 22:54:00 2016
 ;; Version: 0.4
 ;; Package-Requires: ((emacs "24.4") (cl-lib "0.5"))
-;; Last-Updated: Wed May 03 16:05:29 JST 2017
+;; Last-Updated: Wed May 03 18:04:17 JST 2017
 ;;           By: calancha
-;;     Update #: 314
+;;     Update #: 315
 ;; Compatibility: GNU Emacs: 24.4
 ;; Keywords: files, unix, convenience
 ;;
@@ -163,7 +163,7 @@ The size of the directories is the recursive size obtained with
 (make-variable-buffer-local 'dired-du-dir-info)
 
 (defvar dired-du-mode nil
-  "Variable saving the status of `dired-du-mode'.
+  "Variable with the status of the mode.
 If this variable evaluates non-nil, then show recursive size
 for directories in the Dired buffer.  This variable is also used
 as default value for INCLUDE-DIRS in `dired-du-count-sizes'.")
@@ -217,7 +217,7 @@ The format to display the file sizes is control by
   "Non-nil if current buffer is a `find-dired' buffer.
 When `dired-du-on-find-dired-ok' evaluates non-nil, then this
 buffer show recursive dir sizes with format according with
-`dired-du-size-format' if `dired-du-mode' is enabled.")
+`dired-du-size-format' if the mode is enabled.")
 (make-variable-buffer-local 'dired-du-find-dired-buffer)
 
 (defcustom dired-du-update-headers nil
@@ -2145,7 +2145,7 @@ they are marked, then return their recursive size.
 
 Optional arg ASK, if  non-nil, then user is prompted for previous args.
 Otherwise all optional arguments but INCLUDE-DIRS are nil; arg
-INCLUDE-DIRS is set to (not `dired-du-mode')."
+INCLUDE-DIRS is set to variable `dired-du-mode'."
   (interactive
    (let* ((cursor-in-echo-area t)
           (askme current-prefix-arg)
