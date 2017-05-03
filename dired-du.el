@@ -8,9 +8,9 @@
 ;; Created: Wed Mar 23 22:54:00 2016
 ;; Version: 0.4
 ;; Package-Requires: ((emacs "24.4") (cl-lib "0.5"))
-;; Last-Updated: Wed May 03 11:29:05 JST 2017
+;; Last-Updated: Wed May 03 11:39:59 JST 2017
 ;;           By: calancha
-;;     Update #: 307
+;;     Update #: 308
 ;; Compatibility: GNU Emacs: 24.4
 ;; Keywords: files, unix, convenience
 ;;
@@ -683,13 +683,7 @@ If NAME is not found in DIR-INFO return nil."
 
 (defun dired-du-alist-get (key alist &optional default remove)
   "Return the value associated with KEY in ALIST, using `assq'.
-If KEY is not found in ALIST, return DEFAULT.
-
-This is a generalized variable suitable for use with `setf'.
-When using it to set a value, optional argument REMOVE non-nil
-means to remove KEY from ALIST if the new value is `eql' to DEFAULT."
-  (if (>= emacs-major-version 25)
-      (alist-get key alist default remove))
+If KEY is not found in ALIST, return DEFAULT."
   (let ((x (assq key alist)))
     (if x (cdr x) default)))
 
