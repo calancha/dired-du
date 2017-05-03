@@ -8,9 +8,9 @@
 ;; Created: Wed Mar 23 22:54:00 2016
 ;; Version: 0.4
 ;; Package-Requires: ((emacs "24.4") (cl-lib "0.5"))
-;; Last-Updated: Wed May 03 11:42:36 JST 2017
+;; Last-Updated: Wed May 03 11:44:48 JST 2017
 ;;           By: calancha
-;;     Update #: 309
+;;     Update #: 310
 ;; Compatibility: GNU Emacs: 24.4
 ;; Keywords: files, unix, convenience
 ;;
@@ -451,26 +451,21 @@ This is a floating point number if the size is too large for an integer."
 
 ;;; Handle sizes with thousands comma separator.
 (defun dired-du-string-to-number (str)
-  (if (>= emacs-major-version 25)
-      (progn
-        "Like `dired-x-string-to-number' but handle thousands comma separator.
-STR is a string representing the number."
-       (dired-x--string-to-number (replace-regexp-in-string "," "" str)))
-    "Like `string-to-number' but recognize a trailing unit prefix.
+  "Like `string-to-number' but recognize a trailing unit prefix.
 For example, 2K is expanded to 2048.0.  The caller should make
 sure that a trailing letter in STR is one of BKkMGTPEZY.
 It handles thousands comma separator."
-      (let* ((str-new (replace-regexp-in-string "," "" str))
-             (val (string-to-number str-new))
-             (u (unless (zerop val)
-                  (aref str-new (1- (length str-new))))))
-        (when (and u (> u ?9))
-          (when (= u ?k)
-            (setq u ?K))
-          (let ((units '(?B ?K ?M ?G ?T ?P ?E ?Z ?Y)))
-            (while (and units (/= (pop units) u))
-              (setq val (* 1024.0 val)))))
-        val)))
+  (let* ((str-new (replace-regexp-in-string "," "" str))
+         (val (string-to-number str-new))
+         (u (unless (zerop val)
+              (aref str-new (1- (length str-new))))))
+    (when (and u (> u ?9))
+      (when (= u ?k)
+        (setq u ?K))
+      (let ((units '(?B ?K ?M ?G ?T ?P ?E ?Z ?Y)))
+        (while (and units (/= (pop units) u))
+          (setq val (* 1024.0 val)))))
+    val))
 
 (defun dired-du-use-comma-separator (num)
   "Return number NUM as an string using comma separator."
