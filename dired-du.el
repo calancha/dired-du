@@ -8,9 +8,9 @@
 ;; Created: Wed Mar 23 22:54:00 2016
 ;; Version: 0.4
 ;; Package-Requires: ((emacs "24.4") (cl-lib "0.5"))
-;; Last-Updated: Wed May 03 13:16:24 JST 2017
+;; Last-Updated: Wed May 03 13:19:07 JST 2017
 ;;           By: calancha
-;;     Update #: 312
+;;     Update #: 313
 ;; Compatibility: GNU Emacs: 24.4
 ;; Keywords: files, unix, convenience
 ;;
@@ -82,7 +82,7 @@
 ;;
 ;;   `dired-du--cache-dir-info', `dired-du--change-human-sizes',
 ;;   `dired-du--count-sizes-1', `dired-du--count-sizes-2',
-;;   `dired-du--create/check-dir-info', `dired-du--delete-entry',
+;;   `dired-du--create-or-check-dir-info', `dired-du--delete-entry',
 ;;   `dired-du--drop-unexistent-files', `dired-du--file-in-dir-info-p',
 ;;   `dired-du--find-dired-around', `dired-du--fullname-to-glob-pos',
 ;;   `dired-du--get-all-files-type',
@@ -658,7 +658,7 @@ position of NAME in the alist.
 
 If NAME is not found in DIR-INFO return nil."
   (unless dir-info
-    (setq dir-info (dired-du--create/check-dir-info)))
+    (setq dir-info (dired-du--create-or-check-dir-info)))
   (let ((info (cl-remove-if-not (lambda (x) (cdr-safe x)) dir-info))
         res)
     (when info
@@ -713,7 +713,7 @@ If name is not found in DIR-INFO return nil."
   "Return the position of SUBDIR in `dired-du-dir-info'.
 SUBDIR should be a fullname.
 If SUBDIR is not found return nil."
-  (dired-du--create/check-dir-info)
+  (dired-du--create-or-check-dir-info)
   (cl-position-if (lambda (x)
                     (let ((dir (car-safe x)))
                       (and (stringp dir)
@@ -731,7 +731,7 @@ If SUBDIR is not found return nil."
         (glob-pos (dired-du--fullname-to-glob-pos file)))
     (dired-du--get-position relname dir-info glob-pos)))
 
-(defun dired-du--create/check-dir-info (&optional keep-drop-dirs)
+(defun dired-du--create-or-check-dir-info (&optional keep-drop-dirs)
   "Initialize `dired-du-dir-info' and return it.
 Intial value is just a list with the subdir names included in the
 Dired buffer.  If there are subdirs not included in `dired-du-dir-info'
@@ -781,7 +781,7 @@ the file in the current dired line."
         nlink gid size time time-mod
         name time-cache size-cache nlink-cache change isdir)
     (save-excursion
-      (dired-du--create/check-dir-info)
+      (dired-du--create-or-check-dir-info)
       (if (dired-move-to-filename)
           (let ((mode-len 10)
                 (filename  (and (null remote-dir)
@@ -1533,7 +1533,7 @@ Return `dired-du-dir-info'."
 (defun dired-du--reset ()
   "Reset `dired-du-dir-info' to the initial value."
   (setq dired-du-dir-info nil)
-  (dired-du--create/check-dir-info) nil)
+  (dired-du--create-or-check-dir-info) nil)
 
 (defun dired-du-recompute-dir-size ()
   "Revert Dired buffer and recompute dir sizes."
@@ -1940,7 +1940,7 @@ Optional arg ALL-MARKS, if non-nil, acept all mark characters."
          (setq dired-du-dir-info dir-info))
         (t
          (save-excursion
-           (dired-du--create/check-dir-info)
+           (dired-du--create-or-check-dir-info)
            (let* ((init-pos (point))
                   (files
                    (cond (target-files)
