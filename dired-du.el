@@ -8,9 +8,9 @@
 ;; Created: Wed Mar 23 22:54:00 2016
 ;; Version: 0.4
 ;; Package-Requires: ((emacs "24.4") (cl-lib "0.5"))
-;; Last-Updated: Wed May 03 12:53:42 JST 2017
+;; Last-Updated: Wed May 03 13:16:24 JST 2017
 ;;           By: calancha
-;;     Update #: 311
+;;     Update #: 312
 ;; Compatibility: GNU Emacs: 24.4
 ;; Keywords: files, unix, convenience
 ;;
@@ -139,6 +139,7 @@
 
 (require 'cl-lib)
 (require 'dired)
+(require 'dired-aux)
 (require 'dired-x)
 (require 'find-dired)
 (autoload 'dired-subdir-min "dired-aux")
