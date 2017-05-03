@@ -8,9 +8,9 @@
 ;; Created: Wed Mar 23 22:54:00 2016
 ;; Version: 0.4
 ;; Package-Requires: ((emacs "24.4") (cl-lib "0.5"))
-;; Last-Updated: Wed May 03 13:19:07 JST 2017
+;; Last-Updated: Wed May 03 16:05:29 JST 2017
 ;;           By: calancha
-;;     Update #: 313
+;;     Update #: 314
 ;; Compatibility: GNU Emacs: 24.4
 ;; Keywords: files, unix, convenience
 ;;
@@ -24,11 +24,9 @@
 ;; the recursive size of directories in Dired buffers.
 ;; If `du' program is available, then the directory sizes are
 ;; obtained with it.  Otherwise, the directory sizes are obtained
-;; with Lisp.  The former is much faster.  Another difference is
-;; how to handle directories that the user has no permission to
-;; read: if `du' is installed, then the size is not changed
-;; for those directories.  Otherwise, the value 0 is shown.
-;; 
+;; with Lisp.  The former is much faster.
+;; For directories where the user doesn't have read permission,
+;; the recursive size is not obtained.
 ;; Once this mode is enabled, every new Dired buffer displays
 ;; recursive dir sizes.
 ;;
@@ -91,11 +89,12 @@
 ;;   `dired-du--get-position-1', `dired-du--get-value',
 ;;   `dired-du--global-update-dir-info', `dired-du--initialize',
 ;;   `dired-du--insert-subdir', `dired-du--local-update-dir-info',
-;;   `dired-du--number-as-string-p', `dired-du--replace',
-;;   `dired-du--replace-1', `dired-du--reset',
-;;   `dired-du--revert', `dired-du--subdir-position',
-;;   `dired-du--update-subdir-header', `dired-du--update-subdir-header-1',
-;;   `dired-du-alist-get', `dired-du-directory-at-current-line-p',
+;;   `dired-du--number-as-string-p', `dired-du--read-size-from-buffer',
+;;   `dired-du--replace', `dired-du--replace-1',
+;;   `dired-du--reset', `dired-du--revert',
+;;   `dired-du--subdir-position', `dired-du--update-subdir-header',
+;;   `dired-du--update-subdir-header-1', `dired-du-alist-get',
+;;   `dired-du-directory-at-current-line-p',
 ;;   `dired-du-distinguish-one-marked',
 ;;   `dired-du-filename-relative-to-default-dir',
 ;;   `dired-du-get-all-directories', `dired-du-get-all-files',
@@ -523,6 +522,17 @@ Otherwise use the file at the current line in the Dired buffer."
             (t
              relname)))))
 
+(defun dired-du--read-size-from-buffer ()
+  "Return displayed size for file at current line as a decimal number."
+  (save-excursion
+    (when (dired-move-to-filename)
+      (re-search-backward
+       directory-listing-before-filename-regexp)
+      (let ((pos (progn (skip-chars-forward "^ \t") (point))))
+        (skip-chars-backward "^ \t")
+        (dired-du-string-to-number
+         (buffer-substring-no-properties (point) pos))))))
+
 (defun dired-du-get-recursive-dir-size ()
   "Return recursive directory size for dir at current line.
 If there is not a directory in the current line return nil."
@@ -530,7 +540,8 @@ If there is not a directory in the current line return nil."
   (when (dired-du-directory-at-current-line-p)
     ;; remote files need relative name.
     (let ((dir-rel (dired-get-filename t 'noerror))
-          (size    0))
+          (size 0)
+          (dired-buffer (current-buffer)))
       (with-temp-buffer
         (if dired-du-used-space-program
             (process-file (car dired-du-used-space-program)
@@ -545,7 +556,8 @@ If there is not a directory in the current line return nil."
             (let* ((files (ignore-errors
                             (find-lisp-find-files dir-rel "")))
                    (tmp (if (null files)
-                            0
+                            (with-current-buffer dired-buffer
+                              (dired-du--read-size-from-buffer))
                           (apply #'+ (mapcar
                                       (lambda (f)
                                         (dired-du-size
