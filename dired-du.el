@@ -1481,8 +1481,7 @@ Return `dired-du-dir-info'."
                                                  (eq 'isdir (car-safe x))))
 
                                     new-entry))
-      (let* ((name         (car new-entry);; (dired-du-alist-get 'name new-entry)
-                           )
+      (let* ((name         (car new-entry));; (dired-du-alist-get 'name new-entry)
              (glob-rel-pos (dired-du--get-position name))
              (info         dired-du-dir-info)
              (replace      (and glob-rel-pos (equal glob-pos
