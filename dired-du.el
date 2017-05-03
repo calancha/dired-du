@@ -8,9 +8,9 @@
 ;; Created: Wed Mar 23 22:54:00 2016
 ;; Version: 0.4
 ;; Package-Requires: ((emacs "24.4") (cl-lib "0.5"))
-;; Last-Updated: Tue May 02 14:55:44 JST 2017
+;; Last-Updated: Wed May 03 10:32:04 JST 2017
 ;;           By: calancha
-;;     Update #: 304
+;;     Update #: 305
 ;; Compatibility: GNU Emacs: 24.4
 ;; Keywords: files, unix, convenience
 ;;
@@ -157,7 +157,7 @@ DIRNAME is a subdirectory in the DIRED buffer.
 DIR-INFO is one alist with information about each directory
 in DIRNAME obtained with `dired-du-get-file-info'.  Each
 element is an alist:
-(NAME ((nlink . NLINK) (size . SIZE) (time . TIME))).
+\(NAME ((nlink . NLINK) (size . SIZE) (time . TIME))).
 
 The size of the directories is the recursive size obtained with
 `dired-du-used-space-program'.  The size of the entries
@@ -219,7 +219,7 @@ The format to display the file sizes is control by
   "Non-nil if current buffer is a `find-dired' buffer.
 When `dired-du-on-find-dired-ok' evaluates non-nil, then this
 buffer show recursive dir sizes with format according with
-`dired-du-size-format' if dired-du-mode is enable.")
+`dired-du-size-format' if `dired-du-mode' is enabled.")
 (make-variable-buffer-local 'dired-du-find-dired-buffer)
 
 (defcustom dired-du-update-headers nil
@@ -1732,6 +1732,7 @@ If '.' and '..' are present in the buffer, then include them as well."
 ;;; Insert recursive dir size on Dired buffer.
 
 (defun dired-du--number-as-string-p (str)
+"Return non-nil if STR represents a decimal number."
   (or (string= str "0")
       (and (not (string= str "0"))
            (/= 0 (string-to-number str)))))
