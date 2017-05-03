@@ -8,9 +8,9 @@
 ;; Created: Wed Mar 23 22:54:00 2016
 ;; Version: 0.4
 ;; Package-Requires: ((emacs "24.4") (cl-lib "0.5"))
-;; Last-Updated: Wed May 03 11:39:59 JST 2017
+;; Last-Updated: Wed May 03 11:42:36 JST 2017
 ;;           By: calancha
-;;     Update #: 308
+;;     Update #: 309
 ;; Compatibility: GNU Emacs: 24.4
 ;; Keywords: files, unix, convenience
 ;;
@@ -681,7 +681,7 @@ If NAME is not found in DIR-INFO return nil."
               (when (fn name local-info nil)
                 (throw 'found nil))))))) res))
 
-(defun dired-du-alist-get (key alist &optional default remove)
+(defun dired-du-alist-get (key alist &optional default)
   "Return the value associated with KEY in ALIST, using `assq'.
 If KEY is not found in ALIST, return DEFAULT."
   (let ((x (assq key alist)))
