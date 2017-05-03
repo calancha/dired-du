@@ -8,9 +8,9 @@
 ;; Created: Wed Mar 23 22:54:00 2016
 ;; Version: 0.4
 ;; Package-Requires: ((emacs "24.4") (cl-lib "0.5"))
-;; Last-Updated: Wed May 03 11:00:18 JST 2017
+;; Last-Updated: Wed May 03 11:29:05 JST 2017
 ;;           By: calancha
-;;     Update #: 306
+;;     Update #: 307
 ;; Compatibility: GNU Emacs: 24.4
 ;; Keywords: files, unix, convenience
 ;;
@@ -108,8 +108,8 @@
 ;;
 ;;  Inline functions defined here:
 ;;
-;;   `dired-du-assert-dired-mode', `file-attribute-link-number',
-;;   `file-attribute-modification-time', `file-attribute-size'.
+;;   `dired-du-assert-dired-mode', `dired-du-link-number',
+;;   `dired-du-modification-time', `dired-du-size'.
 ;;
 ;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -414,22 +414,21 @@ matches any mark character."
             (regexp-quote
              (char-to-string (or marker-char dired-marker-char))))))
 
-(unless (> emacs-major-version 25)
-  (defsubst file-attribute-link-number (attributes)
-    "Return the number of links in ATTRIBUTES returned by `file-attributes'."
-    (nth 1 attributes))
+(defsubst dired-du-link-number (attributes)
+  "Return the number of links in ATTRIBUTES returned by `file-attributes'."
+  (nth 1 attributes))
 
-  (defsubst file-attribute-modification-time (attributes)
-    "The modification time in ATTRIBUTES returned by `file-attributes'.
+(defsubst dired-du-modification-time (attributes)
+  "The modification time in ATTRIBUTES returned by `file-attributes'.
 This is the time of the last change to the file's contents, and
 is a list of integers (HIGH LOW USEC PSEC) in the same style
 as (current-time)."
-    (nth 5 attributes))
+  (nth 5 attributes))
 
-  (defsubst file-attribute-size (attributes)
-    "The size (in bytes) in ATTRIBUTES returned by `file-attributes'.
+(defsubst dired-du-size (attributes)
+  "The size (in bytes) in ATTRIBUTES returned by `file-attributes'.
 This is a floating point number if the size is too large for an integer."
-    (nth 7 attributes)))
+  (nth 7 attributes))
 
 
 ;;; Toggle on `dired-du-on-find-dired-ok'.
@@ -550,7 +549,7 @@ If there is not a directory in the current line return nil."
                             0
                           (apply #'+ (mapcar
                                       (lambda (f)
-                                        (file-attribute-size
+                                        (dired-du-size
                                          (file-attributes f)))
                                       files)))))
               (insert (format "%d" tmp)))))
@@ -853,8 +852,8 @@ the file in the current dired line."
                    ;; gid read from buffer: user may disable gid display;
                    ;; we need the the string in the left of the size,
                    ;; whatever it is (uid/gid).
-                   (setq nlink      (file-attribute-link-number attributes)
-                         time-mod   (file-attribute-modification-time attributes)
+                   (setq nlink      (dired-du-link-number attributes)
+                         time-mod   (dired-du-modification-time attributes)
                          name       filename)))
             (setq time-cache  (dired-du--get-value name 'time nil glob-pos)
                   size-cache  (dired-du--get-value name 'size nil glob-pos)
@@ -965,7 +964,7 @@ the file in the current dired line."
   "Return size for non-directory at current line."
   (dired-du-assert-dired-mode)
   (unless (dired-du-directory-at-current-line-p)
-    (file-attribute-size (file-attributes (dired-get-filename)))))
+    (dired-du-size (file-attributes (dired-get-filename)))))
 
 (defun dired-du-get-file-size-remote ()
   "Return size for file at current line.
