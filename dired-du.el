@@ -8,9 +8,9 @@
 ;; Created: Wed Mar 23 22:54:00 2016
 ;; Version: 0.4
 ;; Package-Requires: ((emacs "24.4") (cl-lib "0.5"))
-;; Last-Updated: Wed May 03 10:32:04 JST 2017
+;; Last-Updated: Wed May 03 11:00:18 JST 2017
 ;;           By: calancha
-;;     Update #: 305
+;;     Update #: 306
 ;; Compatibility: GNU Emacs: 24.4
 ;; Keywords: files, unix, convenience
 ;;
@@ -104,17 +104,12 @@
 ;;   `dired-du-get-recursive-dir-size-in-parallel', `dired-du-mark-buffer',
 ;;   `dired-du-mark-subdir-files', `dired-du-marker-regexp',
 ;;   `dired-du-run-in-parallel', `dired-du-string-to-number',
-;;   `dired-du-string-to-number', `dired-du-unmark-buffer',
-;;   `dired-du-use-comma-separator', `file-attribute-collect'.
+;;   `dired-du-unmark-buffer', `dired-du-use-comma-separator'.
 ;;
 ;;  Inline functions defined here:
 ;;
-;;   `dired-du-assert-dired-mode', `file-attribute-access-time',
-;;   `file-attribute-device-number', `file-attribute-group-id',
-;;   `file-attribute-inode-number', `file-attribute-link-number',
-;;   `file-attribute-modes', `file-attribute-modification-time',
-;;   `file-attribute-size', `file-attribute-status-change-time',
-;;   `file-attribute-type', `file-attribute-user-id'.
+;;   `dired-du-assert-dired-mode', `file-attribute-link-number',
+;;   `file-attribute-modification-time', `file-attribute-size'.
 ;;
 ;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -420,35 +415,9 @@ matches any mark character."
              (char-to-string (or marker-char dired-marker-char))))))
 
 (unless (> emacs-major-version 25)
-  (defsubst file-attribute-type (attributes)
-    "The type field in ATTRIBUTES returned by `file-attributes'.
-The value is either t for directory, string (name linked to) for
-symbolic link, or nil."
-    (nth 0 attributes))
-
   (defsubst file-attribute-link-number (attributes)
     "Return the number of links in ATTRIBUTES returned by `file-attributes'."
     (nth 1 attributes))
-
-  (defsubst file-attribute-user-id (attributes)
-    "The UID field in ATTRIBUTES returned by `file-attributes'.
-This is either a string or a number.  If a string value cannot be
-looked up, a numeric value, either an integer or a float, is
-returned."
-    (nth 2 attributes))
-
-  (defsubst file-attribute-group-id (attributes)
-    "The GID field in ATTRIBUTES returned by `file-attributes'.
-This is either a string or a number.  If a string value cannot be
-looked up, a numeric value, either an integer or a float, is
-returned."
-    (nth 3 attributes))
-
-  (defsubst file-attribute-access-time (attributes)
-    "The last access time in ATTRIBUTES returned by `file-attributes'.
-This a list of integers (HIGH LOW USEC PSEC) in the same style
-as (current-time)."
-    (nth 4 attributes))
 
   (defsubst file-attribute-modification-time (attributes)
     "The modification time in ATTRIBUTES returned by `file-attributes'.
@@ -457,61 +426,10 @@ is a list of integers (HIGH LOW USEC PSEC) in the same style
 as (current-time)."
     (nth 5 attributes))
 
-  (defsubst file-attribute-status-change-time (attributes)
-    "The status modification time in ATTRIBUTES returned by `file-attributes'.
-This is the time of last change to the file's attributes: owner
-and group, access mode bits, etc, and is a list of integers (HIGH
-LOW USEC PSEC) in the same style as (current-time)."
-    (nth 6 attributes))
-
   (defsubst file-attribute-size (attributes)
     "The size (in bytes) in ATTRIBUTES returned by `file-attributes'.
 This is a floating point number if the size is too large for an integer."
-    (nth 7 attributes))
-
-  (defsubst file-attribute-modes (attributes)
-    "The file modes in ATTRIBUTES returned by `file-attributes'.
-This is a string of ten letters or dashes as in ls -l."
-    (nth 8 attributes))
-
-  (defsubst file-attribute-inode-number (attributes)
-    "The inode number in ATTRIBUTES returned by `file-attributes'.
-If it is larger than what an Emacs integer can hold, this is of
-the form (HIGH . LOW): first the high bits, then the low 16 bits.
-If even HIGH is too large for an Emacs integer, this is instead
-of the form (HIGH MIDDLE . LOW): first the high bits, then the
-middle 24 bits, and finally the low 16 bits."
-    (nth 10 attributes))
-
-  (defsubst file-attribute-device-number (attributes)
-    "The file system device number in ATTRIBUTES returned by `file-attributes'.
-If it is larger than what an Emacs integer can hold, this is of
-the form (HIGH . LOW): first the high bits, then the low 16 bits.
-If even HIGH is too large for an Emacs integer, this is instead
-of the form (HIGH MIDDLE . LOW): first the high bits, then the
-middle 24 bits, and finally the low 16 bits."
-    (nth 11 attributes))
-
-  (defun file-attribute-collect (attributes &rest attr-names)
-    "Return a sublist of ATTRIBUTES returned by `file-attributes'.
-ATTR-NAMES are symbols with the selected attribute names.
-
-Valid attribute names are: type, link-number, user-id, group-id,
-access-time, modification-time, status-change-time, size, modes,
-inode-number and device-number."
-    (let ((all '(type link-number user-id group-id access-time
-                      modification-time status-change-time
-                      size modes inode-number device-number))
-          result)
-      (while attr-names
-        (let ((attr (pop attr-names)))
-          (if (memq attr all)
-              (push (funcall
-                     (intern (format "file-attribute-%s" (symbol-name attr)))
-                     attributes)
-                    result)
-            (error "Wrong attribute name '%S'" attr))))
-      (nreverse result))))
+    (nth 7 attributes)))
 
 
 ;;; Toggle on `dired-du-on-find-dired-ok'.
@@ -533,27 +451,27 @@ inode-number and device-number."
 
 
 ;;; Handle sizes with thousands comma separator.
-(if (>= emacs-major-version 25)
-    (defun dired-du-string-to-number (str)
-      "Like `dired-x-string-to-number' but handle thousands comma separator.
+(defun dired-du-string-to-number (str)
+  (if (>= emacs-major-version 25)
+      (progn
+        "Like `dired-x-string-to-number' but handle thousands comma separator.
 STR is a string representing the number."
-      (dired-x--string-to-number (replace-regexp-in-string "," "" str)))
-  (defun dired-du-string-to-number (str)
+       (dired-x--string-to-number (replace-regexp-in-string "," "" str)))
     "Like `string-to-number' but recognize a trailing unit prefix.
 For example, 2K is expanded to 2048.0.  The caller should make
 sure that a trailing letter in STR is one of BKkMGTPEZY.
 It handles thousands comma separator."
-    (let* ((str-new (replace-regexp-in-string "," "" str))
-           (val (string-to-number str-new))
-           (u (unless (zerop val)
-                (aref str-new (1- (length str-new))))))
-      (when (and u (> u ?9))
-        (when (= u ?k)
-          (setq u ?K))
-        (let ((units '(?B ?K ?M ?G ?T ?P ?E ?Z ?Y)))
-          (while (and units (/= (pop units) u))
-            (setq val (* 1024.0 val)))))
-      val)))
+      (let* ((str-new (replace-regexp-in-string "," "" str))
+             (val (string-to-number str-new))
+             (u (unless (zerop val)
+                  (aref str-new (1- (length str-new))))))
+        (when (and u (> u ?9))
+          (when (= u ?k)
+            (setq u ?K))
+          (let ((units '(?B ?K ?M ?G ?T ?P ?E ?Z ?Y)))
+            (while (and units (/= (pop units) u))
+              (setq val (* 1024.0 val)))))
+        val)))
 
 (defun dired-du-use-comma-separator (num)
   "Return number NUM as an string using comma separator."
