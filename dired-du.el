@@ -8,9 +8,9 @@
 ;; Created: Wed Mar 23 22:54:00 2016
 ;; Version: 0.4
 ;; Package-Requires: ((emacs "24.4") (cl-lib "0.5"))
-;; Last-Updated: Wed May 03 18:04:17 JST 2017
+;; Last-Updated: Wed May 03 23:34:56 JST 2017
 ;;           By: calancha
-;;     Update #: 315
+;;     Update #: 316
 ;; Compatibility: GNU Emacs: 24.4
 ;; Keywords: files, unix, convenience
 ;;
@@ -300,7 +300,7 @@ just MARKER-CHAR."
        (let ((inhibit-read-only t) case-fold-search found results)
          (if ,arg
              (if (integerp ,arg)
-                 (progn	;; no save-excursion, want to move point.
+                 (progn ;; no save-excursion, want to move point.
                    (dired-repeat-over-lines
                     ,arg
                     (function (lambda ()
@@ -682,15 +682,15 @@ If NAME is not found in DIR-INFO return nil."
                                  (or gpos
                                      (dired-du--subdir-position (car alist)))
                                  rpos))))))
-        (if glob-pos
-            (let ((local-info (nth glob-pos dir-info)))
-              (if (not (consp local-info))
-                  (setq res nil)
-                (fn name local-info glob-pos)))
-          (catch 'found ;; Loop on info.
-            (dolist (local-info info)
-              (when (fn name local-info nil)
-                (throw 'found nil))))))) res))
+                 (if glob-pos
+                     (let ((local-info (nth glob-pos dir-info)))
+                       (if (not (consp local-info))
+                           (setq res nil)
+                         (fn name local-info glob-pos)))
+                   (catch 'found ;; Loop on info.
+                     (dolist (local-info info)
+                       (when (fn name local-info nil)
+                         (throw 'found nil))))))) res))
 
 (defun dired-du-alist-get (key alist &optional default)
   "Return the value associated with KEY in ALIST, using `assq'.
@@ -1012,24 +1012,24 @@ Otherwise use `dired-marker-char'.
 Optional arg MUST-EXIST, if non-nil, hide non-existant files.
 
 Directories '.' and '..' are also marked."
-       (let ((dired-marker-char (or mark dired-marker-char)))
-         (save-excursion
-           (dired-mark-files-in-region (point-min) (point-max))
-           ;; Handle '.' and '..'
-           (let ((inhibit-read-only t))
-             (goto-char (point-min))
-             (while (re-search-forward dired-re-dot (point-max) t)
-               (goto-char (line-beginning-position))
-               (delete-char 1)
-               (insert dired-marker-char))))
-         (when (and must-exist (not (eq dired-marker-char ?\s)))
-           (dired-du-map-over-marks
-            (let ((file (dired-get-filename t t))
-                  (inhibit-read-only t))
-              (when (and file (not (file-exists-p file)))
-                (delete-region (line-beginning-position)
-			                   (progn (forward-line 1) (point)))))
-            nil) nil)))
+  (let ((dired-marker-char (or mark dired-marker-char)))
+    (save-excursion
+      (dired-mark-files-in-region (point-min) (point-max))
+      ;; Handle '.' and '..'
+      (let ((inhibit-read-only t))
+        (goto-char (point-min))
+        (while (re-search-forward dired-re-dot (point-max) t)
+          (goto-char (line-beginning-position))
+          (delete-char 1)
+          (insert dired-marker-char))))
+    (when (and must-exist (not (eq dired-marker-char ?\s)))
+      (dired-du-map-over-marks
+       (let ((file (dired-get-filename t t))
+             (inhibit-read-only t))
+         (when (and file (not (file-exists-p file)))
+           (delete-region (line-beginning-position)
+                          (progn (forward-line 1) (point)))))
+       nil) nil)))
 
 (defun dired-du-unmark-buffer (&optional mark)
   "Remove MARK from all files in the Dired buffer.
@@ -1113,10 +1113,10 @@ Optional arg FILE-INFO, if non-nil, is the file info for SUBDIR files."
                            (setq file-info
                                  (delq nil
                                        (dired-du-with-saved-marks
-                                         (save-excursion
-                                           (dired-du-mark-subdir-files nil 'must-exist)
-                                           (dired-du-map-over-marks
-                                            (funcall fn) nil nil nil))))))
+                                        (save-excursion
+                                          (dired-du-mark-subdir-files nil 'must-exist)
+                                          (dired-du-map-over-marks
+                                           (funcall fn) nil nil nil))))))
                          (let ((size
                                 (apply #'+
                                        (mapcar
@@ -1263,10 +1263,10 @@ Return nil."
     (save-excursion
       (dired-goto-subdir subdir)
       (dired-du-with-saved-marks
-        (save-excursion
-          (dired-du-unmark-buffer)
-          (dired-du-mark-subdir-files nil 'must-exist)
-          (dired-du-map-over-marks (funcall fn) nil nil nil))))
+       (save-excursion
+         (dired-du-unmark-buffer)
+         (dired-du-mark-subdir-files nil 'must-exist)
+         (dired-du-map-over-marks (funcall fn) nil nil nil))))
     (setcar max-lens max-size-len)
     (setcdr max-lens (list max-size-human-len
                            max-size-comma-len
@@ -1404,10 +1404,10 @@ Optional arg, HUMAN-READABLE has the same mean as
                                                              ((null human-readable) size-no-human)
                                                              (t size-comma))))) nil)))))
                   (dired-du-with-saved-marks
-                    (save-excursion
-                      (dired-du-unmark-buffer)
-                      (dired-du-mark-subdir-files nil 'must-exist)
-                      (dired-du-map-over-marks (funcall fn) nil nil nil))))))
+                   (save-excursion
+                     (dired-du-unmark-buffer)
+                     (dired-du-mark-subdir-files nil 'must-exist)
+                     (dired-du-map-over-marks (funcall fn) nil nil nil))))))
             (progress-reporter-done prep))))) res))
 
 (defun dired-du--toggle-human-readable (&optional no-message)
@@ -1653,7 +1653,7 @@ If '.' and '..' are present in the buffer, then include them as well."
 ;;; Insert recursive dir size on Dired buffer.
 
 (defun dired-du--number-as-string-p (str)
-"Return non-nil if STR represents a decimal number."
+  "Return non-nil if STR represents a decimal number."
   (or (string= str "0")
       (and (not (string= str "0"))
            (/= 0 (string-to-number str)))))
@@ -1735,9 +1735,9 @@ Return file info for current subdir."
                 (delq nil
                       (when cur-subdir
                         (dired-du-with-saved-marks
-                          (save-excursion
-                            (dired-du-mark-subdir-files nil 'must-exist) ; Al files
-                            (dired-du-map-over-marks (funcall fn) nil nil nil)))))
+                         (save-excursion
+                           (dired-du-mark-subdir-files nil 'must-exist) ; Al files
+                           (dired-du-map-over-marks (funcall fn) nil nil nil)))))
                 nblanks-gidlen    (dired-du--get-num-extra-blanks file-info)
                 num-blanks        (nth 0 nblanks-gidlen)
                 num-blanks-human  (nth 1 nblanks-gidlen)
@@ -1811,23 +1811,23 @@ Return file info for current subdir."
     (let ((subdirs (mapcar 'car dired-subdir-alist))
           empty-info result)
       (dired-du-with-saved-marks
-        (save-excursion
-          (dired-du-unmark-buffer)
-          (dolist (dir subdirs)
-            (let ((glob-pos  (dired-du--subdir-position dir)))
-              (unless glob-pos ; Inserting a new subdir.
-                (dired-du--insert-subdir dir)
-                (unless (equal 0 (dired-du--subdir-position dir))
-                  (error "The glob-pos for dir %s not 0 (%S) %S"
-                         dir
-                         (dired-du--subdir-position dir)
-                         dired-du-dir-info))
-                (setq glob-pos 0))
-              (let ((dir-info (dired-du--replace-1 glob-pos)))
-                (when dired-du-mode
-                  (if empty-info
-                      (push dir-info result)
-                    (dired-du--global-update-dir-info dir-info glob-pos))))))))
+       (save-excursion
+         (dired-du-unmark-buffer)
+         (dolist (dir subdirs)
+           (let ((glob-pos  (dired-du--subdir-position dir)))
+             (unless glob-pos ; Inserting a new subdir.
+               (dired-du--insert-subdir dir)
+               (unless (equal 0 (dired-du--subdir-position dir))
+                 (error "The glob-pos for dir %s not 0 (%S) %S"
+                        dir
+                        (dired-du--subdir-position dir)
+                        dired-du-dir-info))
+               (setq glob-pos 0))
+             (let ((dir-info (dired-du--replace-1 glob-pos)))
+               (when dired-du-mode
+                 (if empty-info
+                     (push dir-info result)
+                   (dired-du--global-update-dir-info dir-info glob-pos))))))))
       ;; When empty-dir we are setting first time this directory.
       (when (and empty-info dired-du-mode)
         (setcdr dired-du-dir-info result)))))
@@ -2073,8 +2073,8 @@ Please, consider install a 'du' executable suitable to your platform.")
           (let ((scale-factor
                  (if (and dired-du-used-space-program
                           (string= (cadr dired-du-used-space-program) "-sk"))
-                                  1024.0
-                                1.0)))
+                     1024.0
+                   1.0)))
             (cond (dir-info ; Cache size dir
                    (let ((dirs-size
                           (apply #'+ (mapcar (lambda (name)
