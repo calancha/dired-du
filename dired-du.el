@@ -8,9 +8,9 @@
 ;; Created: Wed Mar 23 22:54:00 2016
 ;; Version: 0.4
 ;; Package-Requires: ((emacs "24.4") (cl-lib "0.5"))
-;; Last-Updated: Wed May 03 11:44:48 JST 2017
+;; Last-Updated: Wed May 03 12:53:42 JST 2017
 ;;           By: calancha
-;;     Update #: 310
+;;     Update #: 311
 ;; Compatibility: GNU Emacs: 24.4
 ;; Keywords: files, unix, convenience
 ;;
@@ -24,7 +24,10 @@
 ;; the recursive size of directories in Dired buffers.
 ;; If `du' program is available, then the directory sizes are
 ;; obtained with it.  Otherwise, the directory sizes are obtained
-;; with Lisp.  The former is much faster.
+;; with Lisp.  The former is much faster.  Another difference is
+;; how to handle directories that the user has no permission to
+;; read: if `du' is installed, then the size is not changed
+;; for those directories.  Otherwise, the value 0 is shown.
 ;; 
 ;; Once this mode is enabled, every new Dired buffer displays
 ;; recursive dir sizes.

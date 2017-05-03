@@ -5,7 +5,11 @@ This file defines a minor mode **dired-du-mode** to show
 the recursive size of directories in Dired buffers.
 If *du* program is available, then the directory sizes are
 obtained with it.  Otherwise, the directory sizes are obtained
-with Lisp.  The former is much faster.
+with Lisp.  The former is much faster.  Another difference is
+how to handle directories that the user has no permission to
+read: if `du' is installed, then the size is not changed
+for those directories.  Otherwise, the value 0 is shown.
+ 
 Once this mode is enabled, every new Dired buffer displays
 recursive dir sizes.
 
