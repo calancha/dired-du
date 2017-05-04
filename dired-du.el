@@ -8,9 +8,9 @@
 ;; Created: Wed Mar 23 22:54:00 2016
 ;; Version: 0.4
 ;; Package-Requires: ((emacs "24.4") (cl-lib "0.5"))
-;; Last-Updated: Wed May 03 23:34:56 JST 2017
+;; Last-Updated: Thu May 04 11:54:53 JST 2017
 ;;           By: calancha
-;;     Update #: 316
+;;     Update #: 317
 ;; Compatibility: GNU Emacs: 24.4
 ;; Keywords: files, unix, convenience
 ;;
@@ -24,7 +24,7 @@
 ;; the recursive size of directories in Dired buffers.
 ;; If `du' program is available, then the directory sizes are
 ;; obtained with it.  Otherwise, the directory sizes are obtained
-;; with Lisp.  The former is much faster.
+;; with Lisp.  The former is faster and provide a more precise value.
 ;; For directories where the user doesn't have read permission,
 ;; the recursive size is not obtained.
 ;; Once this mode is enabled, every new Dired buffer displays
@@ -548,12 +548,12 @@ If there is not a directory in the current line return nil."
                           nil t nil
                           (cadr dired-du-used-space-program)
                           dir-rel)
-          ;; `du' not available: obtain the size with Lisp.
+          ;; `du' not available: estimate the size with Lisp as
+          ;; the size of all the regular files under this dir.  This is
+          ;; an underestimation, but it's OK for most of the cases.
           (require 'find-lisp)
           (with-no-warnings
-            ;; Ignore permission denied errors.  This shows '0' size
-            ;; for directories we cannot open, regardless of their real size.
-            (let* ((files (ignore-errors
+            (let* ((files (ignore-errors ; Ignore permission denied errors.
                             (find-lisp-find-files dir-rel "")))
                    (tmp (if (null files)
                             (with-current-buffer dired-buffer
