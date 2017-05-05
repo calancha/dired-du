@@ -8,9 +8,9 @@
 ;; Created: Wed Mar 23 22:54:00 2016
 ;; Version: 0.4
 ;; Package-Requires: ((emacs "24.4") (cl-lib "0.5"))
-;; Last-Updated: Thu May 04 12:13:39 JST 2017
+;; Last-Updated: Fri May 05 14:32:24 JST 2017
 ;;           By: calancha
-;;     Update #: 318
+;;     Update #: 319
 ;; Compatibility: GNU Emacs: 24.4
 ;; Keywords: files, unix, convenience
 ;;
@@ -1450,13 +1450,12 @@ Optional arg, NO-MESSAGE, if non-nil don't show message in the echo area."
   (let ((glob-rel-pos (dired-du--get-position name)))
     (if (not glob-rel-pos)
         (error "Trying to delete unexistant entry for file '%s'" name)
-      (let* ((glob-pos     (car glob-rel-pos))
-             (local-info   (cdr (nth glob-pos dired-du-dir-info))))
-        (setq local-info   (cl-delete-if (lambda (x)
-                                           ;; (member `(name . ,name) x)
-                                           (assoc name x))
-                                         local-info))
-        (setf (cdr (nth glob-pos dired-du-dir-info)) local-info) nil))))
+      (let* ((glob-pos (car glob-rel-pos))
+             (info (cdr (nth glob-pos dired-du-dir-info))))
+        (setq info (delete (assoc name info) info))
+        (setf (cdr (nth glob-pos dired-du-dir-info))
+              info)
+        nil))))
 
 (defun dired-du--local-update-dir-info (new-entry glob-pos)
   "Update with NEW-ENTRY position GLOB-POS of `dired-du-dir-info'.
