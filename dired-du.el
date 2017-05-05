@@ -8,9 +8,9 @@
 ;; Created: Wed Mar 23 22:54:00 2016
 ;; Version: 0.4
 ;; Package-Requires: ((emacs "24.4") (cl-lib "0.5"))
-;; Last-Updated: Fri May 05 14:32:24 JST 2017
+;; Last-Updated: Fri May 05 16:56:16 JST 2017
 ;;           By: calancha
-;;     Update #: 319
+;;     Update #: 320
 ;; Compatibility: GNU Emacs: 24.4
 ;; Keywords: files, unix, convenience
 ;;
@@ -190,7 +190,7 @@ A value of nil disables this feature."
 (defvar dired-du--user-warned (and dired-du-used-space-program t)
   "Nil if the user must be warned about `dired-du-used-space-program' being nil.")
 
-(defcustom dired-du-size-format t
+(defcustom dired-du-size-format nil
   "Set the format for file sizes.
 If equals t, then `dired-du-count-sizes' displays file
 sizes using `file-size-human-readable'.
