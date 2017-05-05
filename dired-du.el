@@ -1477,12 +1477,14 @@ Return `dired-du-dir-info'."
                         (dired-current-directory)))))
     (when (and has-changed isdir)  ; Only update if has change flag non-nil and it is a directory.
       ;; drop unnecessary info.
-      (setq new-entry (cl-delete-if (lambda (x) (or
-                                                 (eq 'change (car-safe x))
-                                                 (eq 'gid (car-safe x))
-                                                 (eq 'isdir (car-safe x))))
+      (setq new-entry
+            (cl-delete-if
+             (lambda (x) (or
+                          (eq 'change (car-safe x))
+                          (eq 'gid (car-safe x))
+                          (eq 'isdir (car-safe x))))
 
-                                    new-entry))
+             new-entry))
       (let* ((name         (car new-entry));; (dired-du-alist-get 'name new-entry)
              (glob-rel-pos (dired-du--get-position name))
              (info         dired-du-dir-info)
