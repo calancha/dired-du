@@ -1,4 +1,7 @@
 # dired-du
+
+[![Build Status](https://api.travis-ci.org/calancha/dired-du.svg?branch=master)](https://travis-ci.org/calancha/dired-du)
+
 ## Display the recursive size of directories in Dired
 
 This file defines a minor mode **dired-du-mode** to show
