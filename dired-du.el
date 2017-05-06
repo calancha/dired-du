@@ -8,9 +8,9 @@
 ;; Created: Wed Mar 23 22:54:00 2016
 ;; Version: 0.4
 ;; Package-Requires: ((emacs "24.4") (cl-lib "0.5"))
-;; Last-Updated: Sat May 06 15:43:01 JST 2017
+;; Last-Updated: Sat May 06 15:46:20 JST 2017
 ;;           By: calancha
-;;     Update #: 325
+;;     Update #: 326
 ;; Compatibility: GNU Emacs: 24.4
 ;; Keywords: files, unix, convenience
 ;;
@@ -2161,7 +2161,7 @@ their recursive size."
                     (and askme
                          ;; (car dired-du-used-space-program)
                          (y-or-n-p "Include directories? ")))))
-     (list mark all-marks dirs askme)))
+     (list mark all-marks dirs)))
   (dired-du-assert-dired-mode)
   (save-excursion
     (let ((mark-size-alist (dired-du--count-sizes-1 mark all-marks include-dirs))
