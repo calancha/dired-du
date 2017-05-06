@@ -8,9 +8,9 @@
 ;; Created: Wed Mar 23 22:54:00 2016
 ;; Version: 0.4
 ;; Package-Requires: ((emacs "24.4") (cl-lib "0.5"))
-;; Last-Updated: Sat May 06 11:58:34 JST 2017
+;; Last-Updated: Sat May 06 12:02:30 JST 2017
 ;;           By: calancha
-;;     Update #: 323
+;;     Update #: 324
 ;; Compatibility: GNU Emacs: 24.4
 ;; Keywords: files, unix, convenience
 ;;
@@ -2131,7 +2131,7 @@ If arg INCLUDE-DIRS, non-nil, then include the directory sizes."
     mark-size-alist))
 
 ;;;###autoload
-(defun dired-du-count-sizes (mark &optional all-marks include-dirs ask)
+(defun dired-du-count-sizes (mark &optional all-marks include-dirs)
   "Count sizes of files marked with MARK.
 If MARK evaluates nil, then use `dired-marker-char'.
 
