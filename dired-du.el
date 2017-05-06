@@ -8,9 +8,9 @@
 ;; Created: Wed Mar 23 22:54:00 2016
 ;; Version: 0.4
 ;; Package-Requires: ((emacs "24.4") (cl-lib "0.5"))
-;; Last-Updated: Fri May 05 16:56:16 JST 2017
+;; Last-Updated: Sat May 06 11:43:18 JST 2017
 ;;           By: calancha
-;;     Update #: 320
+;;     Update #: 321
 ;; Compatibility: GNU Emacs: 24.4
 ;; Keywords: files, unix, convenience
 ;;
@@ -2177,12 +2177,12 @@ INCLUDE-DIRS is set to variable `dired-du-mode'."
                  (num-files    (+ num-non-dirs num-dirs)))
             (setq text (if (= num-files 0)
                            (format "No marked files with mark '%s'\n" (char-to-string cur-mark))
-                         (format "Marked with '%s' %d file%s (%d non-dirs/%d dirs) with total size %s%s%s\n"
+                         (format "Marked with '%s' %d file%s (%d/%d dirs/files) with total size %s%s%s\n"
                                  (char-to-string cur-mark)
                                  num-files
                                  (dired-plural-s num-files)
-                                 num-non-dirs
                                  num-dirs
+                                 num-non-dirs
                                  size-str
                                  (or (and (eq t dired-du-size-format) "") " bytes")
                                  (or (and (not include-dirs) " (dirs size excluded)") ""))))
