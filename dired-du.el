@@ -8,9 +8,9 @@
 ;; Created: Wed Mar 23 22:54:00 2016
 ;; Version: 0.4
 ;; Package-Requires: ((emacs "24.4") (cl-lib "0.5"))
-;; Last-Updated: Sat May 06 11:49:14 JST 2017
+;; Last-Updated: Sat May 06 11:58:34 JST 2017
 ;;           By: calancha
-;;     Update #: 322
+;;     Update #: 323
 ;; Compatibility: GNU Emacs: 24.4
 ;; Keywords: files, unix, convenience
 ;;
@@ -2138,13 +2138,13 @@ If MARK evaluates nil, then use `dired-marker-char'.
 Optional arg ALL-MARKS, if non-nil, then accept all mark characters.
 
 Optional arg INCLUDE-DIRS, if non-nil, include the recursive size of the
-marked directories.  Otherwise not include size dirs if variable
-`dired-du-mode' evaluates nil.  Directories '.' '..' are not special: if
-they are marked, then return their recursive size.
+marked directories.
+If called interactively with a prefix, then prompt for previous
+args.  Otherwise, all optional arguments but INCLUDE-DIRS are nil, and
+INCLUDE-DIRS is set to variable `dired-du-mode'.
 
-Optional arg ASK, if  non-nil, then user is prompted for previous args.
-Otherwise all optional arguments but INCLUDE-DIRS are nil; arg
-INCLUDE-DIRS is set to variable `dired-du-mode'."
+Directories '.' '..' are not special: if they are marked, then return
+their recursive size."
   (interactive
    (let* ((cursor-in-echo-area t)
           (askme current-prefix-arg)
@@ -2160,9 +2160,6 @@ INCLUDE-DIRS is set to variable `dired-du-mode'."
                          (y-or-n-p "Include directories? ")))))
      (list mark all-marks dirs askme)))
   (dired-du-assert-dired-mode)
-  ;; Use `dired-du-mode' as a default for include-dirs when not prompted
-  (unless ask
-    (setq include-dirs dired-du-mode))
   (save-excursion
     (let ((mark-size-alist (dired-du--count-sizes-1 mark all-marks include-dirs))
           (out-buf         (get-buffer-create "*dired-du-count-sizes*"))
