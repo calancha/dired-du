@@ -8,9 +8,9 @@
 ;; Created: Wed Mar 23 22:54:00 2016
 ;; Version: 0.4
 ;; Package-Requires: ((emacs "24.4") (cl-lib "0.5"))
-;; Last-Updated: Sat May 06 11:43:18 JST 2017
+;; Last-Updated: Sat May 06 11:49:14 JST 2017
 ;;           By: calancha
-;;     Update #: 321
+;;     Update #: 322
 ;; Compatibility: GNU Emacs: 24.4
 ;; Keywords: files, unix, convenience
 ;;
@@ -200,9 +200,9 @@ file sizes using thousands comma separator.
 
 Otherwise display file sizes in default numeric format."
   :type '(choice
+          (const :tag "Use default numeric format" nil)
           (const :tag "Use human readable string" t)
-          (const :tag "Use thousands comma separator" 'comma)
-          (const :tag "Use default numeric format" nil))
+          (const :tag "Use thousands comma separator" 'comma))
   :group 'dired-du)
 
 (defcustom dired-du-on-find-dired-ok nil
