@@ -8,9 +8,9 @@
 ;; Created: Wed Mar 23 22:54:00 2016
 ;; Version: 0.4
 ;; Package-Requires: ((emacs "24.4") (cl-lib "0.5"))
-;; Last-Updated: Sat May 06 15:56:55 JST 2017
+;; Last-Updated: Sun May 07 01:43:40 JST 2017
 ;;           By: calancha
-;;     Update #: 327
+;;     Update #: 328
 ;; Compatibility: GNU Emacs: 24.4
 ;; Keywords: files, unix, convenience
 ;;
@@ -172,7 +172,8 @@ as default value for INCLUDE-DIRS in `dired-du-count-sizes'.")
 (defcustom dired-du-used-space-program
   (purecopy (let ((opts (if (string-prefix-p "gnu" (symbol-name system-type))
                             "-sb"
-                          "-sk"))) ; -k overestimate used space for files w/ size < 1024
+                          "-sk"))) ; -k overestimate used space\
+                                   ; for files w/ size < 1024.
               (cond ((executable-find "du") (list "du" opts))
                     ((file-executable-p "/usr/sbin/du")
                      (list "/usr/sbin/du" opts))
@@ -188,7 +189,8 @@ A value of nil disables this feature."
   :group 'dired-du)
 
 (defvar dired-du--user-warned (and dired-du-used-space-program t)
-  "Nil if the user must be warned about `dired-du-used-space-program' being nil.")
+  "Nil if the user must be warned about \
+`dired-du-used-space-program' being nil.")
 
 (defcustom dired-du-size-format nil
   "Set the format for file sizes.
@@ -257,7 +259,8 @@ The value returned is the value of the last form in BODY."
 
 ;; As `dired-map-over-marks' but with additional arg ALL-MARKS.
 (defmacro dired-du-map-over-marks (body arg &optional show-progress
-                                        distinguish-one-marked marker-char all-marks)
+                                        distinguish-one-marked
+                                        marker-char all-marks)
   "Eval BODY with point on each marked line.  Return a list of BODY's results.
 If no marked file could be found, execute BODY on the current
 line.  ARG, if non-nil, specifies the files to use instead of the
@@ -685,7 +688,7 @@ If NAME is not found in DIR-INFO return nil."
                        (if (not (consp local-info))
                            (setq res nil)
                          (fn name local-info glob-pos)))
-                   (catch 'found ;; Loop on info.
+                   (catch 'found ; Loop on info.
                      (dolist (local-info info)
                        (when (fn name local-info nil)
                          (throw 'found nil))))))) res))
@@ -863,87 +866,116 @@ the file in the current dired line."
                   nlink-cache (dired-du--get-value name 'nlink nil glob-pos))
             (dired-move-to-filename)
             (save-excursion
-              (setq time (cond (remote-dir
-                                ;; the regexp below tries to match from the last
-                                ;; digit of the size field through a space after
-                                ;; the date.  Also, dates may have different
-                                ;; formats depending on file age, so the date
-                                ;; column need not be aligned to the right.
-                                (buffer-substring-no-properties
-                                 (save-excursion
-                                   (skip-chars-backward " \t")
-                                   (point))
-                                 (progn
-                                   (re-search-backward
-                                    directory-listing-before-filename-regexp)
-                                   (skip-chars-forward "^ \t")
-                                   (1+ (point)))))
-                               (t ;; local file
-                                (progn
-                                  (re-search-backward
-                                   directory-listing-before-filename-regexp)
-                                  (skip-chars-forward "^ \t")
-                                  (format "%s" time-mod))))
-                    size   (let ((size-on-buffer
-                                  (dired-du-string-to-number
-                                   (buffer-substring-no-properties
-                                    (point)
-                                    (progn
-                                      (skip-chars-backward "^ \t")
-                                      (point))))))
-                             (cond ((member
-                                     (file-name-nondirectory name) '("." ".."))
-                                    (let* ((size-file     size-on-buffer)
-                                           (size-human    (file-size-human-readable size-file))
-                                           (size-no-human (format "%d" size-file))
-                                           (size-comma    (dired-du-use-comma-separator size-file))
-                                           (fn (lambda (human default size-comma)
-                                                 (cond ((eq t dired-du-size-format)
-                                                        human)
-                                                       ((null dired-du-size-format)
-                                                        default)
-                                                       (t
-                                                        size-comma)))))
-                                      (cond ((null dir-dots)
-                                             (funcall fn size-human size-no-human size-comma))
-                                            (t ; obtain recursive size also for '.' and '..'.
-                                             (let* ((size-dir      (or dir-size (dired-du-get-recursive-dir-size)))
-                                                    (size-human    (file-size-human-readable size-dir))
-                                                    (size-no-human (format "%d" size-dir))
-                                                    (size-comma    (dired-du-use-comma-separator size-dir)))
-                                               (funcall fn size-human size-no-human size-comma))))))
-                                   ((and dired-du-mode
-                                         (dired-du-directory-at-current-line-p))
-                                    (let* ((size-recur     (or (and (string= time time-cache)
-                                                                    (= nlink nlink-cache)
-                                                                    (dired-du-string-to-number size-cache))
-                                                               (or dir-size (dired-du-get-recursive-dir-size))))
-                                           (recursive-size (cond ((eq t dired-du-size-format)
-                                                                  (file-size-human-readable size-recur))
-                                                                 ((null dired-du-size-format)
-                                                                  (format "%d" size-recur))
-                                                                 (t
-                                                                  (dired-du-use-comma-separator size-recur)))))
-                                      recursive-size))
-                                   (t
-                                    (let* ((size-file      (progn
-                                                             (dired-du-string-to-number
-                                                              (format "%d" size-on-buffer))))
-                                           (size-human      (file-size-human-readable size-file))
-                                           (size-no-human   (format "%d" size-file))
-                                           (size-comma      (dired-du-use-comma-separator size-file)))
-                                      (cond ((eq t dired-du-size-format)
-                                             size-human)
-                                            ((null dired-du-size-format)
-                                             size-no-human)
-                                            (t
-                                             size-comma))))))
-                    gid (buffer-substring-no-properties (progn
-                                                          (skip-chars-backward " \t")
-                                                          (point))
-                                                        (progn
-                                                          (skip-chars-backward "^ \t")
-                                                          (point)))
+              (setq time
+                    (cond (remote-dir
+                           ;; the regexp below tries to match from the last
+                           ;; digit of the size field through a space after
+                           ;; the date.  Also, dates may have different
+                           ;; formats depending on file age, so the date
+                           ;; column need not be aligned to the right.
+                           (buffer-substring-no-properties
+                            (save-excursion
+                              (skip-chars-backward " \t")
+                              (point))
+                            (progn
+                              (re-search-backward
+                               directory-listing-before-filename-regexp)
+                              (skip-chars-forward "^ \t")
+                              (1+ (point)))))
+                          (t ; local file
+                           (progn
+                             (re-search-backward
+                              directory-listing-before-filename-regexp)
+                             (skip-chars-forward "^ \t")
+                             (format "%s" time-mod))))
+                    size (let ((size-on-buffer
+                                (dired-du-string-to-number
+                                 (buffer-substring-no-properties
+                                  (point)
+                                  (progn
+                                    (skip-chars-backward "^ \t")
+                                    (point))))))
+                           (cond ((member
+                                   (file-name-nondirectory name) '("." ".."))
+                                  (let* ((size-file     size-on-buffer)
+                                         (size-human
+                                          (file-size-human-readable size-file))
+                                         (size-no-human
+                                          (format "%d" size-file))
+                                         (size-comma
+                                          (dired-du-use-comma-separator
+                                           size-file))
+                                         (fn (lambda (human default size-comma)
+                                               (cond ((eq t dired-du-size-format)
+                                                      human)
+                                                     ((null dired-du-size-format)
+                                                      default)
+                                                     (t
+                                                      size-comma)))))
+                                    (cond ((null dir-dots)
+                                           (funcall fn size-human size-no-human
+                                                    size-comma))
+                                          (t ; obtain recursive size also\
+					                         ; for '.' and '..'.
+                                           (let* ((size-dir
+                                                   (or dir-size
+                                                       (dired-du-get-recursive-dir-size)))
+                                                  (size-human
+                                                   (file-size-human-readable
+                                                    size-dir))
+                                                  (size-no-human
+                                                   (format "%d" size-dir))
+                                                  (size-comma
+                                                   (dired-du-use-comma-separator
+                                                    size-dir)))
+                                             (funcall fn size-human
+                                                      size-no-human
+                                                      size-comma))))))
+                                 ((and dired-du-mode
+                                       (dired-du-directory-at-current-line-p))
+                                  (let* ((size-recur
+                                          (or (and (string= time time-cache)
+                                                   (= nlink nlink-cache)
+                                                   (dired-du-string-to-number
+                                                    size-cache))
+                                              (or
+                                               dir-size
+                                               (dired-du-get-recursive-dir-size))))
+                                         (recursive-size
+                                          (cond ((eq t dired-du-size-format)
+                                                 (file-size-human-readable
+                                                  size-recur))
+                                                ((null dired-du-size-format)
+                                                 (format "%d" size-recur))
+                                                (t
+                                                 (dired-du-use-comma-separator
+                                                  size-recur)))))
+                                    recursive-size))
+                                 (t
+                                  (let* ((size-file
+                                          (progn
+                                            (dired-du-string-to-number
+                                             (format "%d" size-on-buffer))))
+                                         (size-human
+                                          (file-size-human-readable size-file))
+                                         (size-no-human
+                                          (format "%d" size-file))
+                                         (size-comma
+                                          (dired-du-use-comma-separator
+                                           size-file)))
+                                    (cond ((eq t dired-du-size-format)
+                                           size-human)
+                                          ((null dired-du-size-format)
+                                           size-no-human)
+                                          (t
+                                           size-comma))))))
+                    gid (buffer-substring-no-properties
+                         (progn
+                           (skip-chars-backward " \t")
+                           (point))
+                         (progn
+                           (skip-chars-backward "^ \t")
+                           (point)))
                     ;; set update change flag.
                     change (cond ((and (dired-du-directory-at-current-line-p)
                                        (not (string= size size-cache)))
@@ -1112,7 +1144,8 @@ Optional arg FILE-INFO, if non-nil, is the file info for SUBDIR files."
                                  (delq nil
                                        (dired-du-with-saved-marks
                                         (save-excursion
-                                          (dired-du-mark-subdir-files nil 'must-exist)
+                                          (dired-du-mark-subdir-files
+                                           nil 'must-exist)
                                           (dired-du-map-over-marks
                                            (funcall fn) nil nil nil))))))
                          (let ((size
@@ -1187,10 +1220,14 @@ meaning of such column."
                          (dired-du-string-to-number
                           (dired-du-alist-get 'size x))))))
          (fn4 (lambda (x) (length (dired-du-alist-get 'gid x))))
-         (max-size-len       (or (and dir-info (apply #'max (mapcar fn dir-info))) 0))
-         (max-size-human-len (or (and dir-info (apply #'max (mapcar fn2 dir-info))) 0))
-         (max-size-comma-len (or (and dir-info (apply #'max (mapcar fn3 dir-info))) 0))
-         (max-gid-len        (or (and dir-info (apply #'max (mapcar fn4 dir-info))) 0))
+         (max-size-len
+          (or (and dir-info (apply #'max (mapcar fn dir-info))) 0))
+         (max-size-human-len
+          (or (and dir-info (apply #'max (mapcar fn2 dir-info))) 0))
+         (max-size-comma-len
+          (or (and dir-info (apply #'max (mapcar fn3 dir-info))) 0))
+         (max-gid-len
+          (or (and dir-info (apply #'max (mapcar fn4 dir-info))) 0))
          result num-blanks num-blanks-human num-blanks-comma)
     (setq num-blanks       (1+ max-size-len) ; 1 space far from gid
           num-blanks-human (1+ max-size-human-len)
@@ -1201,7 +1238,8 @@ meaning of such column."
                                  max-gid-len))
     result))
 
-(defun dired-du--get-max-gid-and-size-lengths-for-subdir (subdir max-lens &optional non-dirs)
+(defun dired-du--get-max-gid-and-size-lengths-for-subdir
+    (subdir max-lens &optional non-dirs)
   "Get max length of gids and sizes for SUBDIR in several formats.
 MAX-LENS is a list
 \(MAX-SIZE-LEN MAX-SIZE-HUMAN-LEN MAX-SIZE-COMMA-LEN MAX-GID-LEN).
@@ -1219,11 +1257,13 @@ Return nil."
          (max-gid-len 0)
          (fn (lambda ()
                (when (and (dired-move-to-filename)
-                          (re-search-backward directory-listing-before-filename-regexp)
+                          (re-search-backward
+                           directory-listing-before-filename-regexp)
                           (or (not non-dirs)
                               (not (dired-du-directory-at-current-line-p))))
                  (let (size gid)
-                   ;; Handle human readable case: if size is not shown in human readable
+                   ;; Handle human readable case: if size is\
+                   ;; not shown in human readable.
                    ;; just comeback to the same position.
                    (skip-chars-forward "^ \t")
                    (backward-char 1)
@@ -1240,24 +1280,32 @@ Return nil."
                                (save-excursion
                                  (skip-chars-backward "^ \t")
                                  (point))))
-                   ;; If the file is a dir and `dired-du-mode' enabled, use stored size.
+                   ;; If the file is a dir and `dired-du-mode'\
+                   ;; is enabled, then use stored size.
                    (when (and (dired-du-directory-at-current-line-p)
                               dired-du-mode)
                      (let ((name (dired-get-filename t t)))
-                       (setq size (or (dired-du--get-value name 'size)
-                                      (format "%d"
-                                              (dired-du-get-recursive-dir-size))))))
+                       (setq size
+                             (or (dired-du--get-value name 'size)
+                                 (format "%d"
+                                         (dired-du-get-recursive-dir-size))))))
                    (let* ((size-num       (dired-du-string-to-number size))
                           (size-no-human  (format "%d" size-num))
-                          (size-comma     (dired-du-use-comma-separator size-num))
+                          (size-comma
+                           (dired-du-use-comma-separator size-num))
                           (size-len       (length size-no-human))
-                          (size-human-len (length (file-size-human-readable size-num)))
+                          (size-human-len
+                           (length (file-size-human-readable size-num)))
                           (size-comma-len (length size-comma))
                           (gid-len        (length gid)))
-                     (setq max-size-len       (max max-size-len size-len)
-                           max-size-human-len (max max-size-human-len size-human-len)
-                           max-size-comma-len (max max-size-comma-len size-comma-len)
-                           max-gid-len        (max max-gid-len gid-len))) nil)))))
+                     (setq max-size-len
+                           (max max-size-len size-len)
+                           max-size-human-len
+                           (max max-size-human-len size-human-len)
+                           max-size-comma-len
+                           (max max-size-comma-len size-comma-len)
+                           max-gid-len
+                           (max max-gid-len gid-len))) nil)))))
     (save-excursion
       (dired-goto-subdir subdir)
       (dired-du-with-saved-marks
@@ -1321,15 +1369,11 @@ Optional arg, HUMAN-READABLE has the same mean as
           ;; Just prompt in the case of `find-dired' buffers.
           (setq revert-find
                 (or (not dired-du-find-dired-buffer)
-                    (y-or-n-p "Change to numeric size format requires revert buffer.  Revert? ")))
+                    (y-or-n-p "Change to numeric size format \
+requires revert buffer.  Revert? ")))
           (when revert-find
             (revert-buffer)
-            (setq res  t)
-            ;; (while revert-buffer-in-progress-p
-            ;;                             ;(message "Wait until find process finish")
-            ;;   (progress-reporter-update prep)
-            ;;   (sleep-for 1))
-            ))))
+            (setq res  t)))))
     (unless revert-find
       (message nil))
     (when human-readable
@@ -1347,7 +1391,8 @@ Optional arg, HUMAN-READABLE has the same mean as
                              (setq done t)
                              "Changing to default numeric sizes...")
                             (t
-                             "Changing to size with thousands comma separator..."))
+                             "Changing to size with thousands \
+comma separator..."))
                       0 num-subdirs)))
           (unless done
             (dolist (subdir subdirs)
@@ -1356,17 +1401,20 @@ Optional arg, HUMAN-READABLE has the same mean as
               (save-excursion
                 (dired-goto-subdir subdir)
                 (dired-du--update-subdir-header subdir)
-                (dired-du--get-max-gid-and-size-lengths-for-subdir subdir max-lens)
+                (dired-du--get-max-gid-and-size-lengths-for-subdir
+                 subdir max-lens)
                 (let* ((max-size-len       (nth 0 max-lens))
                        (max-size-human-len (nth 1 max-lens))
                        (max-size-comma-len (nth 2 max-lens))
                        (max-gid-len        (nth 3 max-lens))
                        (fn (lambda ()
-                             (when (and (dired-move-to-filename)
-                                        (re-search-backward
-                                         directory-listing-before-filename-regexp))
+                             (when
+                                 (and (dired-move-to-filename)
+                                      (re-search-backward
+                                       directory-listing-before-filename-regexp))
                                (let (size end-size)
-                                 ;; Handle human readable case: if size is not shown in human readable
+                                 ;; Handle human readable case: if size \
+                                 ;; is not shown in human readable
                                  ;; just comeback to the same position.
                                  (skip-chars-forward "^ \t")
                                  (backward-char 1)
@@ -1376,31 +1424,41 @@ Optional arg, HUMAN-READABLE has the same mean as
                                                  (progn
                                                    (skip-chars-backward "^ \t")
                                                    (point))))
-                                 ;; If the file is a dir and `dired-du-mode' enable, use stored size.
-                                 (when (and (dired-du-directory-at-current-line-p)
-                                            dired-du-mode)
+                                 ;; If the file is a dir and `dired-du-mode'\
+                                 ;; is enabled, then use stored size.
+                                 (when (and
+                                        (dired-du-directory-at-current-line-p)
+                                        dired-du-mode)
                                    (let ((name (dired-get-filename t t)))
                                      (setq size (dired-du--get-value name 'size))
                                      (cl-assert (not (null size)))))
-                                 (let* ((size-num      (dired-du-string-to-number size))
-                                        (size-human    (file-size-human-readable size-num))
+                                 (let* ((size-num     (dired-du-string-to-number
+                                                       size))
+                                        (size-human    (file-size-human-readable
+                                                        size-num))
                                         (size-no-human (format "%d" size-num))
-                                        (size-comma    (dired-du-use-comma-separator size-num))
-                                        (num-blanks    (cond ((eq t human-readable)
-                                                              (1+ max-size-human-len))
-                                                             ((null human-readable)
-                                                              (1+ max-size-len))
-                                                             (t
-                                                              (1+ max-size-comma-len))))
+                                        (size-comma
+                                         (dired-du-use-comma-separator
+                                          size-num))
+                                        (num-blanks
+                                         (cond ((eq t human-readable)
+                                                (1+ max-size-human-len))
+                                               ((null human-readable)
+                                                (1+ max-size-len))
+                                               (t
+                                                (1+ max-size-comma-len))))
                                         (fmt (format "%%%ds" num-blanks)))
 
                                    (skip-chars-backward " \t") ; gid end
                                    (skip-chars-backward "^ \t") ; gid start
                                    (forward-char max-gid-len)
                                    (delete-region (point) end-size)
-                                   (insert (format fmt (cond ((eq t human-readable) size-human)
-                                                             ((null human-readable) size-no-human)
-                                                             (t size-comma))))) nil)))))
+                                   (insert
+                                    (format
+                                     fmt
+                                     (cond ((eq t human-readable) size-human)
+                                           ((null human-readable) size-no-human)
+                                           (t size-comma))))) nil)))))
                   (dired-du-with-saved-marks
                    (save-excursion
                      (dired-du-unmark-buffer)
@@ -1415,7 +1473,8 @@ Optional arg, NO-MESSAGE, if non-nil don't show message in the echo area."
   (when (and (derived-mode-p 'dired-mode)
              dired-du-find-dired-buffer
              (not dired-du-on-find-dired-ok))
-    (error "Toogle format size in `find-dired' buffers is disabled; enable with %s"
+    (error "Toogle format size in `find-dired' buffers \
+is disabled; enable with %s"
            (substitute-command-keys "\\[dired-du-on-find-dired-ok-toggle\]")))
 
   (when (and (derived-mode-p 'dired-mode)
@@ -1434,9 +1493,11 @@ Optional arg, NO-MESSAGE, if non-nil don't show message in the echo area."
         (let ((string (cond ((eq human t)
                              "Enabled human-readable units in Dired buffer")
                             ((null human)
-                             "Enabled default numeric size format in Dired buffer")
+                             "Enabled default numeric size \
+format in Dired buffer")
                             (t
-                             "Enabled size with thousands comma separator in Dired buffer"))))
+                             "Enabled size with thousands comma \
+separator in Dired buffer"))))
           (unless no-message
             (message string)))))))
 
@@ -1475,8 +1536,9 @@ Return `dired-du-dir-info'."
         (ding)
         (setq glob-pos (dired-du--subdir-position
                         (dired-current-directory)))))
-    (when (and has-changed isdir)  ; Only update if has change flag non-nil and it is a directory.
-      ;; drop unnecessary info.
+    (when (and has-changed isdir)  ; Only update if has change
+                                   ; flag non-nil and it is a directory.
+      ;; Drop unnecessary info.
       (setq new-entry
             (cl-delete-if
              (lambda (x) (or
@@ -1485,7 +1547,7 @@ Return `dired-du-dir-info'."
                           (eq 'isdir (car-safe x))))
 
              new-entry))
-      (let* ((name         (car new-entry));; (dired-du-alist-get 'name new-entry)
+      (let* ((name         (car new-entry))
              (glob-rel-pos (dired-du--get-position name))
              (info         dired-du-dir-info)
              (replace      (and glob-rel-pos (equal glob-pos
@@ -1535,9 +1597,13 @@ Return `dired-du-dir-info'."
                   (let* ((name     (car entry))
                          (basename (file-name-nondirectory name))
                          ;; (fullname (expand-file-name name default-directory)))
-                         (fullname (if (member basename '("." ".."))
-                                       (concat (file-name-as-directory (dired-current-directory)) basename)
-                                     (expand-file-name name default-directory))))
+                         (fullname
+                          (if (member basename '("." ".."))
+                              (concat
+                               (file-name-as-directory
+                                (dired-current-directory))
+                               basename)
+                            (expand-file-name name default-directory))))
                     (or (dired-goto-file fullname)
                         (dired-du--delete-entry name))))))))))))
 
@@ -1605,7 +1671,9 @@ If '.' and '..' are present in the buffer, then include them as well."
                      (t
                       (unless (dired-du-directory-at-current-line-p)
                         (dired-get-filename local 'noerror))))))
-         (files (delq nil (dired-du-map-over-marks (funcall fn) nil nil nil ?\s)))
+         (files (delq nil
+                      (dired-du-map-over-marks
+                       (funcall fn) nil nil nil ?\s)))
          (files
           (nconc
            files
@@ -1675,44 +1743,53 @@ Return file info for current subdir."
                  dired-du-on-find-dired-ok))
     (let* ((inhibit-read-only t)
            (init-pos (point))
-           (cur-subdir        (let ((info (nth glob-pos dired-du-dir-info)))
-                                (cond ((listp info) (car info))
-                                      (t info))))
+           (cur-subdir       (let ((info (nth glob-pos dired-du-dir-info)))
+                               (cond ((listp info) (car info))
+                                     (t info))))
            ;; All files/dirs must exist, otherwise will fail in '/proc'.
-           (all-dirs            (cl-delete-if-not #'file-exists-p
-                                                  (dired-du-get-all-directories)))
-           (all-files           (cl-delete-if-not #'file-exists-p
-                                                  (dired-du-get-all-files)))
-           (num-tot-files       (length all-files))
-           (num-tot-dirs        (length all-dirs))
-           (all-subdir-dirs     (cl-delete-if-not
-                                 #'file-exists-p
-                                 (dired-du-get-all-subdir-directories 'local)))
-           ;; Collect all directories not in `dired-du-dir-info' and process them in parallel.
+           (all-dirs          (cl-delete-if-not
+                               #'file-exists-p
+                               (dired-du-get-all-directories)))
+           (all-files         (cl-delete-if-not #'file-exists-p
+                                                (dired-du-get-all-files)))
+           (num-tot-files     (length all-files))
+           (num-tot-dirs      (length all-dirs))
+           (all-subdir-dirs   (cl-delete-if-not
+                               #'file-exists-p
+                               (dired-du-get-all-subdir-directories 'local)))
+           ;; Collect all directories not in `dired-du-dir-info'
+           ;; and process them in parallel.
            (subdir-dirname-size
             (and dired-du-mode
                  (let ((missing-dirs
                         (cl-delete-if
                          (lambda (x)
-                           (and (dired-du--file-in-dir-info-p x dired-du-dir-info)
+                            (and (dired-du--file-in-dir-info-p
+                                  x
+                                  dired-du-dir-info)
                                 (not (member x '("." "..")))))
                          all-subdir-dirs)))
                    (when missing-dirs
                      (if dired-du-used-space-program
-                         (dired-du-get-recursive-dir-size-in-parallel missing-dirs)
+                         (dired-du-get-recursive-dir-size-in-parallel
+                          missing-dirs)
                        (let (res)
                          (save-excursion
                            (dolist (d missing-dirs)
-                             (dired-goto-file (expand-file-name d default-directory))
-                             (push (list d (dired-du-get-recursive-dir-size)) res)))))))))
+                             (dired-goto-file
+                              (expand-file-name d default-directory))
+                             (push (list d (dired-du-get-recursive-dir-size))
+                                   res)))))))))
            (dir-counter 0)
            (collect-str "Dired-Du collecting file info ...")
            (rep-coll
-            (make-progress-reporter collect-str 0 num-tot-dirs nil nil 1)) ;; Just dirs.
+            (make-progress-reporter
+             collect-str 0 num-tot-dirs nil nil 1)) ; Just dirs.
            (replace-str "Dired-Du replacing file info ...")
            (rep-rep
-            (make-progress-reporter replace-str 0 num-tot-files)) ;; All files.
-           file-info name fullname size nblanks-gidlen num-blanks num-blanks-human
+            (make-progress-reporter replace-str 0 num-tot-files)) ; All files.
+           file-info name fullname size nblanks-gidlen
+           num-blanks num-blanks-human
            num-blanks-comma max-gid-len)
       (save-excursion
         (dired-goto-subdir cur-subdir)
@@ -1729,16 +1806,23 @@ Return file info for current subdir."
                                                               dir-counter
                                                               collect-str)))
                           ;; Use the recursive dir size if we already got it.
-                          (let ((dirname-size (cdr (assoc-string cdir subdir-dirname-size))))
-                            (setq new-info    (dired-du-get-file-info glob-pos nil dirname-size)
-                                  dir-counter (or (and isdirp (1+ dir-counter)) dir-counter)))))
+                          (let ((dirname-size
+                                 (cdr (assoc-string cdir subdir-dirname-size))))
+                            (setq new-info
+                                  (dired-du-get-file-info glob-pos
+                                                          nil dirname-size)
+                                  dir-counter
+                                  (or (and isdirp (1+ dir-counter))
+                                      dir-counter)))))
                       new-info))))
           (setq file-info
                 (delq nil
                       (when cur-subdir
                         (dired-du-with-saved-marks
                          (save-excursion
-                           (dired-du-mark-subdir-files nil 'must-exist) ; Al files
+                           (dired-du-mark-subdir-files ; Al files.
+                            nil
+                            'must-exist)
                            (dired-du-map-over-marks (funcall fn) nil nil nil)))))
                 nblanks-gidlen    (dired-du--get-num-extra-blanks file-info)
                 num-blanks        (nth 0 nblanks-gidlen)
@@ -1757,13 +1841,15 @@ Return file info for current subdir."
                     size     (dired-du-alist-get 'size finfo)
                     basename (file-name-nondirectory name)
                     fullname (if (member basename '("." ".."))
-                                 (concat (file-name-as-directory cur-subdir) basename)
+                                 (concat (file-name-as-directory cur-subdir)
+                                         basename)
                                (expand-file-name name default-directory)))
               (when (and (dired-goto-file fullname)
                          (re-search-backward
                           directory-listing-before-filename-regexp
                           (line-beginning-position) t))
-                ;; Handle human readable case: in other case just comeback to the same position
+                ;; Handle human readable case: in other case just
+                ;; comeback to the same position.
                 (skip-chars-forward "^ \t")
                 (backward-char 1)
                 (unless num-blanks (error "The num-blanks null"))
@@ -1789,14 +1875,16 @@ Return file info for current subdir."
                       (forward-char max-gid-len)
                     (goto-char gid-end))
                   (delete-region (point) pos)
-                  (insert (format fmt (cond ((eq t dired-du-size-format)
-                                             (file-size-human-readable
-                                              (dired-du-string-to-number size)))
-                                            ((null dired-du-size-format)
-                                             (format "%d" (dired-du-string-to-number size)))
-                                            (t
-                                             (dired-du-use-comma-separator
-                                              (dired-du-string-to-number size))))))))
+                  (insert
+                   (format fmt
+                           (cond ((eq t dired-du-size-format)
+                                  (file-size-human-readable
+                                   (dired-du-string-to-number size)))
+                                 ((null dired-du-size-format)
+                                  (format "%d" (dired-du-string-to-number size)))
+                                 (t
+                                  (dired-du-use-comma-separator
+                                   (dired-du-string-to-number size))))))))
               (forward-line 1)))
           (message replace-done)
           (message nil)
@@ -1809,7 +1897,8 @@ Return file info for current subdir."
             (and dired-du-find-dired-buffer
                  dired-du-on-find-dired-ok))
     (unless dired-du-mode
-      (error "Recursive dir sizes is disabled: Use `dired-du-mode' to enable it"))
+      (error "Recursive dir sizes is disabled: \
+Use `dired-du-mode' to enable it"))
     (let ((subdirs (mapcar 'car dired-subdir-alist))
           empty-info result)
       (dired-du-with-saved-marks
@@ -1887,7 +1976,8 @@ and disable it once you have finished checking the used space."
          (add-hook 'dired-mode-hook #'dired-du-mode))
         (t
          (advice-remove 'find-dired-sentinel #'dired-du--find-dired-around)
-         (remove-hook 'dired-before-readin-hook #'dired-du--drop-unexistent-files)
+         (remove-hook 'dired-before-readin-hook
+                      #'dired-du--drop-unexistent-files)
          (remove-hook 'dired-after-readin-hook #'dired-du--replace)
          (remove-hook 'dired-mode-hook #'dired-du-mode))))
 
@@ -1931,7 +2021,10 @@ INFO is the output of `dired-du-get-marked-files' or
                     (cdr info))
                    (t info)))) res))
 
-(defun dired-du--cache-dir-info (&optional dir-info target-files include-dirs mark all-marks)
+(defun dired-du--cache-dir-info (&optional dir-info
+                                           target-files
+                                           include-dirs
+                                           mark all-marks)
   "Update `dired-du-dir-info' and return it.
 Optional arg DIR-INFO, if non-nil, is the new value.  Otherwise, it is
 obtained within this function.
@@ -1979,26 +2072,33 @@ Optional arg ALL-MARKS, if non-nil, acept all mark characters."
                             ;; Only those in files.
                             (when (and (member file files)
                                        (dired-move-to-filename))
-                              (setq  dir      (file-name-directory file)
-                                     isdirp   (dired-du-directory-at-current-line-p)
-                                     glob-pos (dired-du--subdir-position dir)
-                                     counter  (1+ counter))
+                              (setq dir    (file-name-directory file)
+                                    isdirp (dired-du-directory-at-current-line-p)
+                                    glob-pos (dired-du--subdir-position dir)
+                                    counter  (1+ counter))
                               ;; Include dirs means get recursive size for dirs.
                               (let ((dired-du-mode include-dirs))
-                                (setq new-info (list (dired-du-get-file-info nil 'dir-dots))))
-                              ;; For dirs only cache recursive size; for non-dirs always cache.
+                                (setq new-info
+                                      (list (dired-du-get-file-info
+                                             nil 'dir-dots))))
+                              ;; For dirs only cache recursive size.
+                              ;; for non-dirs always cache.
                               (when (and glob-pos new-info isdirp include-dirs)
-                                (dired-du--global-update-dir-info new-info glob-pos))))
+                                (dired-du--global-update-dir-info
+                                 new-info glob-pos))))
                           (when isdirp
                             (save-excursion
                               (goto-char init-pos)
-                              (progress-reporter-force-update progress-reporter-collect
-                                                              counter
-                                                              collect-str)))
+                              (progress-reporter-force-update
+                               progress-reporter-collect
+                               counter
+                               collect-str)))
                           nil))))
-             (let ((marked-files (dired-du-get-marked-files nil nil nil t mark all-marks)))
+             (let ((marked-files
+                    (dired-du-get-marked-files nil nil nil t mark all-marks)))
                (when (cdr marked-files)
-                 (dired-du-map-over-marks (funcall fn) nil nil nil mark all-marks)
+                 (dired-du-map-over-marks
+                  (funcall fn) nil nil nil mark all-marks)
                  (progress-reporter-done progress-reporter-collect)))))))
   dired-du-dir-info)
 
@@ -2028,33 +2128,36 @@ Please, consider install a 'du' executable suitable to your platform.")
         (sit-for 1)
         (ding))
     (save-excursion
-      (let* ((files         (dired-du-get-marked-files nil nil nil t mark))
-             (files         (dired-du-distinguish-one-marked files))
-             (num-files     (length files))
-             (dirs          (delq nil (dired-du-map-over-marks
-                                       (when (dired-du-directory-at-current-line-p)
-                                         (dired-get-filename nil 'noerror))
-                                       nil nil t mark all-marks)))
-             (dirs          (dired-du-distinguish-one-marked dirs))
-             (num-dirs      (length dirs))
-             (num-non-dirs  (- num-files num-dirs))
-
+      (let* ((files        (dired-du-get-marked-files nil nil nil t mark))
+             (files        (dired-du-distinguish-one-marked files))
+             (num-files    (length files))
+             (dirs         (delq nil
+                                 (dired-du-map-over-marks
+                                  (when (dired-du-directory-at-current-line-p)
+                                    (dired-get-filename nil 'noerror))
+                                  nil nil t mark all-marks)))
+             (dirs         (dired-du-distinguish-one-marked dirs))
+             (num-dirs     (length dirs))
+             (num-non-dirs (- num-files num-dirs))
              (dir-info     (dired-du--cache-dir-info nil
                                                      dirs
                                                      include-dirs
                                                      mark all-marks))
              ;; size for all non-directories
-             (non-dirs-size (apply #'+
-                                   (mapcar
-                                    (lambda (x)
-                                      (dired-du-string-to-number (dired-du-alist-get 'size x)))
-                                    (let* ((info
-                                            (delq nil (dired-du-map-over-marks
-                                                       (unless
-                                                           (dired-du-directory-at-current-line-p)
-                                                         (dired-du-get-file-info))
-                                                       nil nil nil mark all-marks)))
-                                           (info (dired-du-distinguish-one-marked info))) info))))
+             (non-dirs-size
+              (apply
+               #'+
+               (mapcar
+                (lambda (x)
+                  (dired-du-string-to-number
+                   (dired-du-alist-get 'size x)))
+                (let* ((info
+                        (delq nil
+                              (dired-du-map-over-marks
+                               (unless (dired-du-directory-at-current-line-p)
+                                 (dired-du-get-file-info))
+                               nil nil nil mark all-marks)))
+                       (info (dired-du-distinguish-one-marked info))) info))))
              ;; (info (delq nil (dired-du-map-over-marks
              ;;                  (if (and (dired-du-directory-at-current-line-p)
              ;;                           include-dirs)
@@ -2075,33 +2178,48 @@ Please, consider install a 'du' executable suitable to your platform.")
                    1.0)))
             (cond (dir-info ; Cache size dir
                    (let ((dirs-size
-                          (apply #'+ (mapcar (lambda (name)
-                                               (let* ((relname  (dired-du-filename-relative-to-default-dir name))
-                                                      (glob-pos (dired-du--fullname-to-glob-pos name))
-                                                      (size     (dired-du--get-value
-                                                                 relname
-                                                                 'size
-                                                                 dir-info
-                                                                 glob-pos)))
-                                                 (or (and size (dired-du-string-to-number size)) 0))) dirs))))
-                     (setq total-size (+ total-size (* scale-factor dirs-size)))))
-                  (t ; Get size dir with `dired-du-dir-info'. Needed if dir size not cached.
+                          (apply
+                           #'+
+                           (mapcar
+                            (lambda (name)
+                              (let* ((relname
+                                      (dired-du-filename-relative-to-default-dir
+                                       name))
+                                     (glob-pos
+                                      (dired-du--fullname-to-glob-pos name))
+                                     (size     (dired-du--get-value
+                                                relname
+                                                'size
+                                                dir-info
+                                                glob-pos)))
+                                (or (and size
+                                         (dired-du-string-to-number size))
+                                    0))) dirs))))
+                     (setq total-size
+                           (+ total-size (* scale-factor dirs-size)))))
+                  (t ; Get size dir with `dired-du-dir-info'.
+                     ; Needed if dir size not cached.
                    (let* ((sizes
-                           (mapcar (lambda (fullname)
-                                     (save-excursion
-                                       (or (and (dired-goto-file fullname)
-                                                (dired-du-get-recursive-dir-size))
-                                           0))) dirs))
+                           (mapcar
+                            (lambda (fullname)
+                              (save-excursion
+                                (or (and (dired-goto-file fullname)
+                                         (dired-du-get-recursive-dir-size))
+                                    0))) dirs))
                           (dirs-size (apply #'+ sizes)))
-                     (setq total-size (+ total-size (* scale-factor dirs-size))))))))
+                     (setq total-size
+                           (+ total-size (* scale-factor dirs-size))))))))
 
-        (setq total-size-str (cond ((eq t dired-du-size-format)
-                                    (file-size-human-readable total-size))
-                                   ((null dired-du-size-format)
-                                    (format "%d" total-size))
-                                   (t
-                                    (let ((total (string-to-number (format "%.0f" total-size))))
-                                      (dired-du-use-comma-separator total)))))
+        (setq total-size-str
+              (cond ((eq t dired-du-size-format)
+                     (file-size-human-readable total-size))
+                    ((null dired-du-size-format)
+                     (format "%d" total-size))
+                    (t
+                     (let ((total
+                            (string-to-number
+                             (format "%.0f" total-size))))
+                       (dired-du-use-comma-separator total)))))
         (list mark num-non-dirs num-dirs total-size-str)))))
 
 (defun dired-du--count-sizes-1 (mark all-marks include-dirs)
@@ -2115,10 +2233,11 @@ If arg INCLUDE-DIRS, non-nil, then include the directory sizes."
   (let ((marks (dired-du-get-all-marks))
         mark-size-alist)
     (cond ((not all-marks)
-           (setq mark-size-alist (list (dired-du--count-sizes-2
-                                        mark
-                                        nil
-                                        include-dirs))))
+           (setq mark-size-alist
+                 (list (dired-du--count-sizes-2
+                        mark
+                        nil
+                        include-dirs))))
           (t
            (unless marks
              (error "No marked files"))
@@ -2148,9 +2267,11 @@ their recursive size."
    (let* ((cursor-in-echo-area t)
           (askme current-prefix-arg)
           (all-marks (and askme (y-or-n-p "All marks? ")))
-          (mark (or (and askme (not all-marks) (progn
-                                                 (message "Count files marked with mark: ")
-                                                 (read-char)))
+          (mark (or (and askme
+                         (not all-marks)
+                         (progn
+                           (message "Count files marked with mark: ")
+                           (read-char)))
                     dired-marker-char))
           ;; If `dired-du-mode' is enabled include dirs; otherwise prompt user.
           (dirs (or dired-du-mode
@@ -2171,17 +2292,21 @@ their recursive size."
                  (num-dirs     (nth 2 mark-info))
                  (size-str     (nth 3 mark-info))
                  (num-files    (+ num-non-dirs num-dirs)))
-            (setq text (if (= num-files 0)
-                           (format "No marked files with mark '%s'\n" (char-to-string cur-mark))
-                         (format "Marked with '%s' %d file%s (%d/%d dirs/files) with total size %s%s%s\n"
-                                 (char-to-string cur-mark)
-                                 num-files
-                                 (dired-plural-s num-files)
-                                 num-dirs
-                                 num-non-dirs
-                                 size-str
-                                 (or (and (eq t dired-du-size-format) "") " bytes")
-                                 (or (and (not include-dirs) " (dirs size excluded)") ""))))
+            (setq text
+                  (if (= num-files 0)
+                      (format "No marked files with mark '%s'\n"
+                              (char-to-string cur-mark))
+                    (format "Marked with '%s' %d file%s (%d/%d dirs/files) \
+with total size %s%s%s\n"
+                            (char-to-string cur-mark)
+                            num-files
+                            (dired-plural-s num-files)
+                            num-dirs
+                            num-non-dirs
+                            size-str
+                            (or (and (eq t dired-du-size-format) "") " bytes")
+                            (or (and (not include-dirs)
+                                     " (dirs size excluded)") ""))))
             (insert text))))
       (if (cdr mark-size-alist)
           (display-buffer out-buf)
