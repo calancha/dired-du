@@ -8,9 +8,9 @@
 ;; Created: Wed Mar 23 22:54:00 2016
 ;; Version: 0.4
 ;; Package-Requires: ((emacs "24.4") (cl-lib "0.5"))
-;; Last-Updated: Sat May 06 12:02:30 JST 2017
+;; Last-Updated: Sat May 06 15:43:01 JST 2017
 ;;           By: calancha
-;;     Update #: 324
+;;     Update #: 325
 ;; Compatibility: GNU Emacs: 24.4
 ;; Keywords: files, unix, convenience
 ;;
@@ -1580,12 +1580,15 @@ Optional arg LOCAL, if non-nil, then return file name
 relative to `default-directory'.  Otherwise, return fullnames.
 
 If '.' and '..' are present in the buffer, then include them as well."
-  (let* ((files (delq nil (dired-du-get-marked-files local nil nil nil nil 'all-marks)))
-         (files
-          (nconc
-           files
-           (delq nil (dired-du-get-marked-files local nil nil nil ?\s))))
-         (files (delete-dups files))) files))
+  (let ((marked
+         (delq nil
+               (dired-du-get-marked-files
+                local nil nil nil nil 'all-marks)))
+        (unmarked
+         (delq nil
+               (dired-du-get-marked-files local nil nil nil ?\s))))
+    (delete-dups
+     (nconc marked unmarked))))
 
 (defun dired-du--get-all-files-type (type &optional local)
   "Return list of files of type TYPE in the Dired buffer.
