@@ -8,9 +8,9 @@
 ;; Created: Wed Mar 23 22:54:00 2016
 ;; Version: 0.4
 ;; Package-Requires: ((emacs "24.4") (cl-lib "0.5"))
-;; Last-Updated: Sat May 06 15:46:20 JST 2017
+;; Last-Updated: Sat May 06 15:56:55 JST 2017
 ;;           By: calancha
-;;     Update #: 326
+;;     Update #: 327
 ;; Compatibility: GNU Emacs: 24.4
 ;; Keywords: files, unix, convenience
 ;;
@@ -1879,8 +1879,6 @@ and disable it once you have finished checking the used space."
   (unless (derived-mode-p 'dired-mode)
     (error "Dired-Du: Buffer not a Dired buffer"))
   (cond (dired-du-mode
-         ;; (advice-add 'find-dired-sentinel :before #'dired-du--find-dired-before)
-         ;; (advice-add 'find-dired-sentinel :after #'dired-du--find-dired-after)
          (advice-add 'find-dired-sentinel :around #'dired-du--find-dired-around)
 
          (add-hook 'dired-before-readin-hook #'dired-du--drop-unexistent-files)
@@ -1888,8 +1886,6 @@ and disable it once you have finished checking the used space."
          (add-hook 'dired-du-mode-hook #'dired-du--initialize)
          (add-hook 'dired-mode-hook #'dired-du-mode))
         (t
-         ;; (advice-remove 'find-dired-sentinel #'dired-du--find-dired-before)
-         ;; (advice-remove 'find-dired-sentinel #'dired-du--find-dired-after)
          (advice-remove 'find-dired-sentinel #'dired-du--find-dired-around)
          (remove-hook 'dired-before-readin-hook #'dired-du--drop-unexistent-files)
          (remove-hook 'dired-after-readin-hook #'dired-du--replace)
