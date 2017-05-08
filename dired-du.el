@@ -8,9 +8,9 @@
 ;; Created: Wed Mar 23 22:54:00 2016
 ;; Version: 0.4
 ;; Package-Requires: ((emacs "24.4") (cl-lib "0.5"))
-;; Last-Updated: Sun May 07 01:43:40 JST 2017
+;; Last-Updated: Mon May 08 13:22:19 JST 2017
 ;;           By: calancha
-;;     Update #: 328
+;;     Update #: 329
 ;; Compatibility: GNU Emacs: 24.4
 ;; Keywords: files, unix, convenience
 ;;
@@ -2156,7 +2156,7 @@ Please, consider install a 'du' executable suitable to your platform.")
                               (dired-du-map-over-marks
                                (unless (dired-du-directory-at-current-line-p)
                                  (dired-du-get-file-info))
-                               nil nil nil mark all-marks)))
+                               nil nil 'distinguish-one-marked mark all-marks)))
                        (info (dired-du-distinguish-one-marked info))) info))))
              ;; (info (delq nil (dired-du-map-over-marks
              ;;                  (if (and (dired-du-directory-at-current-line-p)
