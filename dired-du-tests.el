@@ -196,5 +196,41 @@
       (mapc #'kill-buffer buffers)
       (delete-directory dir 'recursive))))
 
+(ert-deftest dired-du-count-sizes-test ()
+  (let* ((dir (make-temp-file "dired-du" 'dir))
+         (dir2 (expand-file-name "foo" dir))
+         (dir3 (expand-file-name "bar" dir))
+         (file1 (expand-file-name "file1" dir))
+         (file2 (expand-file-name "file2" dir))
+         (file3 (expand-file-name "file3" dir))
+         (buffers '()) mode-on)
+    (unwind-protect
+        (let ((name2 (file-name-nondirectory dir2))
+              (name3 (file-name-nondirectory dir3))
+              (marks '()))
+          (make-directory dir2)
+          (make-directory dir3)
+          (dolist (file (list file1 file2 file3))
+            (write-region "" nil file))
+          (add-to-list 'buffers (dired dir))
+          (setq mode-on dired-du-mode)
+          (dired-du-mode 1)
+          (should (string-match "No marked files with mark"
+                                (dired-du-count-sizes ?*)))
+          ;; Mark dirs.
+          (dired-mark-directories nil)
+          (should (dired-du-count-sizes ?*))
+          (dired-change-marks ?* ?1)
+          (should (dired-du-count-sizes ?1))
+          (dired-mark-files-regexp "\\`file[1-3]\\'")
+          (should (string-match "Marked with [^ ]+ 3 files"
+                                (dired-du-count-sizes ?*)))
+          (should (windowp (dired-du-count-sizes ?* 'all-marks))))
+      (if mode-on
+          (dired-du-mode 1)
+        (dired-du-mode 0))
+      (mapc #'kill-buffer buffers)
+      (delete-directory dir 'recursive))))
+
 (provide 'dired-du-tests)
 ;;; dired-du-tests.el ends here
