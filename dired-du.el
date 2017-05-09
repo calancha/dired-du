@@ -8,9 +8,9 @@
 ;; Created: Wed Mar 23 22:54:00 2016
 ;; Version: 0.4
 ;; Package-Requires: ((emacs "24.4") (cl-lib "0.5"))
-;; Last-Updated: Tue May 09 10:47:40 JST 2017
+;; Last-Updated: Tue May 09 11:43:19 JST 2017
 ;;           By: calancha
-;;     Update #: 330
+;;     Update #: 331
 ;; Compatibility: GNU Emacs: 24.4
 ;; Keywords: files, unix, convenience
 ;;
@@ -1923,7 +1923,9 @@ Use `dired-du-mode' to enable it"))
                    (dired-du--global-update-dir-info dir-info glob-pos))))))))
       ;; When empty-dir we are setting first time this directory.
       (when (and empty-info dired-du-mode)
-        (setcdr dired-du-dir-info result)))))
+        (setcdr dired-du-dir-info result))
+      (let ((inhibit-read-only t))
+        (dired-insert-set-properties (point-min) (point-max))))))
 
 
 ;;; Define minor mode.
@@ -2003,8 +2005,6 @@ Please, consider install a 'du' executable suitable to your platform.")
                     (message nil))
                   (message "Initializing Dired-Du mode ...")
                   (dired-du--replace)
-                  (let ((inhibit-read-only t))
-                    (dired-insert-set-properties (point-min) (point-max)))
                   (message "%s in Dired buffers" enable-str))
                  (t
                   (dired-revert)
