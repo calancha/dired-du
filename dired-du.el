@@ -8,9 +8,9 @@
 ;; Created: Wed Mar 23 22:54:00 2016
 ;; Version: 0.4
 ;; Package-Requires: ((emacs "24.4") (cl-lib "0.5"))
-;; Last-Updated: Mon May 08 13:22:19 JST 2017
+;; Last-Updated: Tue May 09 10:47:40 JST 2017
 ;;           By: calancha
-;;     Update #: 329
+;;     Update #: 330
 ;; Compatibility: GNU Emacs: 24.4
 ;; Keywords: files, unix, convenience
 ;;
@@ -1498,6 +1498,8 @@ format in Dired buffer")
                             (t
                              "Enabled size with thousands comma \
 separator in Dired buffer"))))
+          (let ((inhibit-read-only t))
+                (dired-insert-set-properties (point-min) (point-max)))
           (unless no-message
             (message string)))))))
 
@@ -2001,6 +2003,8 @@ Please, consider install a 'du' executable suitable to your platform.")
                     (message nil))
                   (message "Initializing Dired-Du mode ...")
                   (dired-du--replace)
+                  (let ((inhibit-read-only t))
+                    (dired-insert-set-properties (point-min) (point-max)))
                   (message "%s in Dired buffers" enable-str))
                  (t
                   (dired-revert)
