@@ -8,9 +8,9 @@
 ;; Created: Wed Mar 23 22:54:00 2016
 ;; Version: 0.4
 ;; Package-Requires: ((emacs "24.4") (cl-lib "0.5"))
-;; Last-Updated: Tue May 09 11:43:19 JST 2017
+;; Last-Updated: Tue May 09 12:25:43 JST 2017
 ;;           By: calancha
-;;     Update #: 331
+;;     Update #: 332
 ;; Compatibility: GNU Emacs: 24.4
 ;; Keywords: files, unix, convenience
 ;;
@@ -53,6 +53,10 @@
 ;; they use; the command accepts a particular character mark
 ;; i.e., '*' or all kind of marks i.e, any character other than ?\s.
 ;;
+;; Bugs
+;; ====
+;; Sometimes the progress reporter shows funny things,
+;; for instance, percents > 100.
 ;;
 ;;  Internal variables defined here:
 ;;
