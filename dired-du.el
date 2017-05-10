@@ -8,9 +8,9 @@
 ;; Created: Wed Mar 23 22:54:00 2016
 ;; Version: 0.4
 ;; Package-Requires: ((emacs "24.4") (cl-lib "0.5"))
-;; Last-Updated: Tue May 09 12:25:43 JST 2017
+;; Last-Updated: Wed May 10 19:44:21 JST 2017
 ;;           By: calancha
-;;     Update #: 332
+;;     Update #: 333
 ;; Compatibility: GNU Emacs: 24.4
 ;; Keywords: files, unix, convenience
 ;;
@@ -1350,15 +1350,9 @@ Arguments IGNORE-AUTO, NOCONFIRM and PRESERVE-MODES are ignored."
   "Change the format to show the file sizes in the Dired buffer.
 Optional arg, HUMAN-READABLE has the same mean as
 `dired-du-size-format'."
-  ;; To change the size format, first the size is
-  ;; read from the dired buffer: to translate human
-  ;; readable format to default numeric format we
-  ;; just need to revert the buffer.
-  ;; FIXME: Revert the buffer is not acceptable for `find-dired'
-  ;; buffers; but if we don't revert it the file sizes is not
-  ;; correct.
-  ;; Another way is cache the sizes for those `find-dired' buffers.
-  ;; Ok, let's revert the buffer after receive user confirmation.
+  ;; To translate human readable format into default numeric format,
+  ;; revert the buffer:  for `find-dired' buffers ask
+  ;; confirmation before revert.
   (let (revert-find res)
     (unless human-readable
       (let ((switches dired-actual-switches))
