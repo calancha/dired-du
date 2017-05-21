@@ -8,9 +8,9 @@
 ;; Created: Wed Mar 23 22:54:00 2016
 ;; Version: 0.4
 ;; Package-Requires: ((emacs "24.4") (cl-lib "0.5"))
-;; Last-Updated: Wed May 10 19:44:21 JST 2017
+;; Last-Updated: Sun May 21 11:34:52 JST 2017
 ;;           By: calancha
-;;     Update #: 333
+;;     Update #: 334
 ;; Compatibility: GNU Emacs: 24.4
 ;; Keywords: files, unix, convenience
 ;;
@@ -244,6 +244,34 @@ available \\([,.0-9]+[BkKMGTPEZY]?\\)"
   "Regexp matching a subdir header in a Dired buffer using lib `files+'.")
 
 
+
+(defcustom dired-du-bind-mode t
+  "Non-nil means bind `dired-du-mode' to C-x M-r in `dired-mode-map', otherwise do not."
+  :type 'boolean
+  :set (lambda (sym val)
+         (let ((map dired-mode-map))
+           (when (set sym val)
+             (define-key map (kbd "C-x M-r") 'dired-du-mode))))
+  :group 'dired-keys)
+
+(defcustom dired-du-bind-human-toggle t
+  "Non-nil means bind `dired-du--toggle-human-readable' to C-x C-h in `dired-mode-map', otherwise do not."
+  :type 'boolean
+  :set (lambda (sym val)
+         (let ((map dired-mode-map))
+           (when (set sym val)
+             (define-key map (kbd "C-x C-h") 'dired-du--toggle-human-readable))))
+  :group 'dired-keys)
+
+(defcustom dired-du-bind-count-sizes t
+  "Non-nil means bind `dired-du-count-sizes' to *N in `dired-mode-map', otherwise do not."
+  :type 'boolean
+  :set (lambda (sym val)
+         (let ((map dired-mode-map))
+           (when (set sym val)
+             (define-key map "*N" 'dired-du-count-sizes))))
+  :group 'dired-keys)
+
 ;;; Macros.
 
 (defmacro dired-du-with-saved-marks (&rest body)
@@ -1501,8 +1529,6 @@ separator in Dired buffer"))))
           (unless no-message
             (message string)))))))
 
-(define-key dired-mode-map (kbd "C-x C-h") 'dired-du--toggle-human-readable)
-
 
 ;;; Functions to update `dired-du-dir-info'.
 
@@ -2008,9 +2034,6 @@ Please, consider install a 'du' executable suitable to your platform.")
                   (dired-revert)
                   (message "%s in Dired buffers" disable-str)))))))
 
-(define-key dired-mode-map (kbd "C-x M-r") 'dired-du-mode)
-(define-key dired-mode-map (kbd "C-x M-f") 'dired-du-on-find-dired-ok-toggle)
-
 
 ;;; Count marked files and their sizes.
 
@@ -2314,7 +2337,6 @@ with total size %s%s%s\n"
           (display-buffer out-buf)
         (message (substring text 0 -1))))))
 
-(define-key dired-mode-map "*N" 'dired-du-count-sizes)
 
 
 ;;; Miscellaneous functions.
