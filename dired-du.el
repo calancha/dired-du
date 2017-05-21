@@ -8,9 +8,9 @@
 ;; Created: Wed Mar 23 22:54:00 2016
 ;; Version: 0.4
 ;; Package-Requires: ((emacs "24.4") (cl-lib "0.5"))
-;; Last-Updated: Sun May 21 11:34:52 JST 2017
+;; Last-Updated: Sun May 21 12:15:19 JST 2017
 ;;           By: calancha
-;;     Update #: 334
+;;     Update #: 335
 ;; Compatibility: GNU Emacs: 24.4
 ;; Keywords: files, unix, convenience
 ;;
@@ -67,8 +67,10 @@
 ;;
 ;;  Coustom variables defined here:
 ;;
-;;   `dired-du-on-find-dired-ok', `dired-du-size-format',
-;;   `dired-du-update-headers', `dired-du-used-space-program'.
+;;   `dired-du-bind-count-sizes', `dired-du-bind-human-toggle',
+;;   `dired-du-bind-mode', `dired-du-on-find-dired-ok',
+;;   `dired-du-size-format', `dired-du-update-headers',
+;;   `dired-du-used-space-program'.
 ;;
 ;;  Macros defined here:
 ;;
