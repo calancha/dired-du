@@ -8,9 +8,9 @@
 ;; Created: Wed Mar 23 22:54:00 2016
 ;; Version: 0.4
 ;; Package-Requires: ((emacs "24.4") (cl-lib "0.5"))
-;; Last-Updated: Sun May 21 12:15:19 JST 2017
+;; Last-Updated: Thu May 25 22:13:06 JST 2017
 ;;           By: calancha
-;;     Update #: 335
+;;     Update #: 336
 ;; Compatibility: GNU Emacs: 24.4
 ;; Keywords: files, unix, convenience
 ;;
@@ -38,12 +38,11 @@
 ;;    (add-hook 'dired-mode-hook #'dired-du-mode)
 ;;
 ;; Note that obtaining the recursive size of all the directories
-;; in a Dired buffer might be slow; thus, it may significantly delay
+;; in a Dired buffer might be very slow: it may significantly delay
 ;; the time to display a new Dired buffer.
-;;
 ;; Instead of enabling `dired-du-mode' by default in all Dired buffers
-;; you might prefer to use this mode as a convenient interfaz to
-;; the `du' program: just enable it in the current Dired buffer,
+;; you might prefer to use this mode just as an interfaz to
+;; the `du' program: you can enable it in the current Dired buffer,
 ;; and disable it once you have finished checking the used space.
 ;;
 ;; -- Number of marked files and their size --

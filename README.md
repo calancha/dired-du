@@ -23,12 +23,11 @@ To enable the mode at start up:
 ```(add-hook 'dired-mode-hook #'dired-du-mode)```
 
 Note that obtaining the recursive size of all the directories
-in a Dired buffer might be slow; thus, it may significantly delay
+in a Dired buffer might be very slow: it may significantly delay
 the time to display a new Dired buffer.
-
 Instead of enabling *dired-du-mode* by default in all Dired buffers
-you might prefer to use this mode as a convenient interfaz to
-the *du* program: just enable it in the current Dired buffer,
+you might prefer to use this mode as an interfaz to
+the *du* program: you can enable it in the current Dired buffer,
 and disable it once you have finished checking the used space.
 
 ## Number of marked files and their size
