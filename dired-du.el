@@ -1,20 +1,38 @@
 ;;; dired-du.el --- Dired with recursive directory sizes -*- lexical-binding: t -*-
-;;
-;; Filename: dired-du.el
-;; Description: Dired with recursive directory sizes
+
+;; Copyright (C) 2016-2017 Free Software Foundation, Inc.
+
 ;; Author: Tino Calancha <tino.calancha@gmail.com>
 ;; Maintainer: Tino Calancha <tino.calancha@gmail.com>
-;; Copyright (C) 2016-2017, Tino Calancha, all rights reserved.
-;; Created: Wed Mar 23 22:54:00 2016
-;; Version: 0.4
-;; Package-Requires: ((emacs "24.4") (cl-lib "0.5"))
-;; Last-Updated: Thu May 25 22:13:06 JST 2017
-;;           By: calancha
-;;     Update #: 336
-;; Compatibility: GNU Emacs: 24.4
 ;; Keywords: files, unix, convenience
+
+;; Created: Wed Mar 23 22:54:00 2016
+;; Version: 0.5
+;; Package-Requires: ((emacs "24.4") (cl-lib "0.5"))
+;; Last-Updated: Fri May 26 21:13:57 JST 2017
+;;           By: calancha
+;;     Update #: 337
+;; Compatibility: GNU Emacs: 24.4
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;
+;; This file is NOT part of GNU Emacs.
+;;
+;; This program is free software; you can redistribute it and/or modify
+;; it under the terms of the GNU General Public License as published by
+;; the Free Software Foundation, either version 3 of the License, or
+;; (at your option) any later version.
+
+;; This program is distributed in the hope that it will be useful,
+;; but WITHOUT ANY WARRANTY; without even the implied warranty of
+;; MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+;; GNU General Public License for more details.
+
+;; You should have received a copy of the GNU General Public License
+;; along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
 
 ;;; Commentary:
 ;;
@@ -54,8 +72,7 @@
 ;;
 ;; Bugs
 ;; ====
-;; Sometimes the progress reporter shows funny things,
-;; for instance, percents > 100.
+;; Some progress reporter might show percent > 100.
 ;;
 ;;  Internal variables defined here:
 ;;
@@ -118,23 +135,6 @@
 ;;   `dired-du-assert-dired-mode', `dired-du-link-number',
 ;;   `dired-du-modification-time', `dired-du-size'.
 ;;
-;;
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;
-;; This file is NOT part of GNU Emacs.
-;;
-;; This program is free software: you can redistribute it and/or modify
-;; it under the terms of the GNU General Public License as published by
-;; the Free Software Foundation, either version 3 of the License, or
-;; (at your option) any later version.
-;;
-;; This program is distributed in the hope that it will be useful,
-;; but WITHOUT ANY WARRANTY; without even the implied warranty of
-;; MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-;; GNU General Public License for more details.
-;;
-;; You should have received a copy of the GNU General Public License
-;; along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
