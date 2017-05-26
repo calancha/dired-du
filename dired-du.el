@@ -9,14 +9,14 @@
 ;; Created: Wed Mar 23 22:54:00 2016
 ;; Version: 0.5
 ;; Package-Requires: ((emacs "24.4") (cl-lib "0.5"))
-;; Last-Updated: Fri May 26 21:13:57 JST 2017
+;; Last-Updated: Fri May 26 21:16:06 JST 2017
 ;;           By: calancha
-;;     Update #: 337
+;;     Update #: 338
 ;; Compatibility: GNU Emacs: 24.4
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-;; This file is NOT part of GNU Emacs.
+;; This file is part of GNU Emacs.
 ;;
 ;; This program is free software; you can redistribute it and/or modify
 ;; it under the terms of the GNU General Public License as published by
