@@ -9,9 +9,9 @@
 ;; Created: Wed Mar 23 22:54:00 2016
 ;; Version: 0.5
 ;; Package-Requires: ((emacs "24.4") (cl-lib "0.5"))
-;; Last-Updated: Fri May 26 21:16:06 JST 2017
+;; Last-Updated: Sat May 27 18:30:02 JST 2017
 ;;           By: calancha
-;;     Update #: 338
+;;     Update #: 339
 ;; Compatibility: GNU Emacs: 24.4
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -96,7 +96,8 @@
 ;;
 ;;   `dired-du--toggle-human-readable', `dired-du-count-sizes',
 ;;   `dired-du-drop-all-subdirs', `dired-du-insert-marked-dirs',
-;;   `dired-du-on-find-dired-ok-toggle', `dired-du-recompute-dir-size'.
+;;   `dired-du-on-find-dired-ok-toggle', `dired-du-recompute-dir-size',
+;;   `dired-du-update-dir-info'.
 ;;
 ;;  Non-interactive functions defined here:
 ;;
@@ -1607,6 +1608,18 @@ Return `dired-du-dir-info'."
   (dolist (new-entry new-info)
     (dired-du--local-update-dir-info new-entry glob-pos)))
 
+(defun dired-du-update-dir-info ()
+  "Update recursive size for the marked files.
+This updates both, `dired-du-dir-info' and the Dired buffer.
+If no marked files, update the file at point."
+  (interactive)
+  (save-excursion
+    (dired-du-map-over-marks
+     (let ((pos (dired-du--subdir-position (dired-current-directory)))
+           (info (list (dired-du-get-file-info))))
+       (dired-du--global-update-dir-info info pos))
+     nil))
+  (dired-du--revert))
 
 (defun dired-du--drop-unexistent-files ()
   "Remove from `dired-du-dir-info' records of unexistent files."
