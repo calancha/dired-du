@@ -8,9 +8,9 @@
 ;; Created: Wed Mar 23 22:54:00 2016
 ;; Version: 0.4
 ;; Package-Requires: ((emacs "24.4") (cl-lib "0.5"))
-;; Last-Updated: Sat May 27 18:25:35 JST 2017
+;; Last-Updated: Mon Sep 24 19:38:19 JST 2018
 ;;           By: calancha
-;;     Update #: 337
+;;     Update #: 338
 ;; Compatibility: GNU Emacs: 24.4
 ;; Keywords: files, unix, convenience
 ;;
@@ -665,7 +665,10 @@ The return value is an alist (DIRNAME . SIZE)."
                                (setq old completed))
                              (setq completed (count-lines (point-min)
                                                           (point-max)))
-                             (sleep-for 1))))
+                             ;; Give a bit of time to the process to end.  Initially we
+                             ;; were waiting 1 s; it turned out to be too conservative value.
+                             ;; TODO: Shouldn't this be run in a sentinel?
+                             (sleep-for 0 10))))
                        ;; collect dir sizes.
                        (goto-char 1)
                        (while (re-search-forward "^[0-9]+" nil t)
