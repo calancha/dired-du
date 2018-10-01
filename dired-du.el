@@ -6,7 +6,7 @@
 ;; Maintainer: Tino Calancha <tino.calancha@gmail.com>
 ;; Copyright (C) 2016-2018, Tino Calancha, all rights reserved.
 ;; Created: Wed Mar 23 22:54:00 2016
-;; Version: 0.4
+;; Version: 0.5.1
 ;; Package-Requires: ((emacs "24.4") (cl-lib "0.5"))
 ;; Last-Updated: Mon Oct 01 17:40:32 JST 2018
 ;;           By: calancha
