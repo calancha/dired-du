@@ -7,7 +7,7 @@
 ;; Keywords: files, unix, convenience
 
 ;; Created: Wed Mar 23 22:54:00 2016
-;; Version: 0.5
+;; Version: 0.5.1
 ;; Package-Requires: ((emacs "24.4") (cl-lib "0.5"))
 ;; Last-Updated: Mon Oct 01 17:40:32 JST 2018
 ;;           By: calancha
