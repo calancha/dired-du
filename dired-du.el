@@ -4,13 +4,13 @@
 ;; Description: Dired with recursive directory sizes
 ;; Author: Tino Calancha <tino.calancha@gmail.com>
 ;; Maintainer: Tino Calancha <tino.calancha@gmail.com>
-;; Copyright (C) 2016-2017, Tino Calancha, all rights reserved.
+;; Copyright (C) 2016-2018, Tino Calancha, all rights reserved.
 ;; Created: Wed Mar 23 22:54:00 2016
 ;; Version: 0.4
 ;; Package-Requires: ((emacs "24.4") (cl-lib "0.5"))
-;; Last-Updated: Mon Sep 24 19:38:19 JST 2018
+;; Last-Updated: Mon Oct 01 17:40:32 JST 2018
 ;;           By: calancha
-;;     Update #: 338
+;;     Update #: 339
 ;; Compatibility: GNU Emacs: 24.4
 ;; Keywords: files, unix, convenience
 ;;
@@ -150,7 +150,7 @@
 (defgroup dired-du nil
   "Dired with recursive size dir."
   :prefix "dired-du-"
-  :group 'dired-du)
+  :group 'dired)
 
 (defvar dired-du-dir-info nil
   "Alist of cached (DIRNAME . DIR-INFO) in Dired buffer.
@@ -191,8 +191,7 @@ A value of nil disables this feature."
                  (list (string :tag "Program")
                        (repeat :tag "Options"
                                :inline t
-                               (string :format "%v"))))
-  :group 'dired-du)
+                               (string :format "%v")))))
 
 (defvar dired-du--user-warned (and dired-du-used-space-program t)
   "Nil if the user must be warned about \
@@ -210,14 +209,13 @@ Otherwise display file sizes in default numeric format."
   :type '(choice
           (const :tag "Use default numeric format" nil)
           (const :tag "Use human readable string" t)
-          (const :tag "Use thousands comma separator" 'comma))
-  :group 'dired-du)
+          (const :tag "Use thousands comma separator" 'comma)))
 
 (defcustom dired-du-on-find-dired-ok nil
   "If Non-nil show recursive dir sizes in `find-dired'.
 The format to display the file sizes is control by
 `dired-du-size-format'."
-  :type 'boolean :group 'dired-du)
+  :type 'boolean)
 
 (defvar dired-du-find-dired-buffer nil
   "Non-nil if current buffer is a `find-dired' buffer.
@@ -229,7 +227,7 @@ buffer show recursive dir sizes with format according with
 (defcustom dired-du-update-headers nil
   "If Non-nil, update the subdir headers.
 The total used space shown contains the recursive size of the directories."
-  :type 'boolean :group 'dired-du)
+  :type 'boolean)
 
 (defvar dired-du-local-subdir-header
   "^  total used in directory \\([,.0-9]+[BkKMGTPEZY]?\\) \
@@ -601,7 +599,8 @@ If there is not a directory in the current line return nil."
               (insert (format "%d" tmp)))))
         (goto-char 1)
         (while (re-search-forward "^[0-9]+" nil t)
-          (setq size (+ size (string-to-number (match-string 0)))))) size)))
+          (setq size (+ size (string-to-number (match-string 0))))))
+      size)))
 
 (defun dired-du-run-in-parallel (command out-buf)
   "Run COMMAND for several files in parallel.
@@ -633,7 +632,7 @@ DIRS is a list of directories.
 The return value is an alist (DIRNAME . SIZE)."
   (dired-du-assert-dired-mode)
   (save-excursion
-    (let ((dirs-rel (mapcar 'file-relative-name dirs))
+    (let ((dirs-rel (mapcar #'file-relative-name dirs))
           (command  (format "%s %s&" (car dired-du-used-space-program)
                             (cadr dired-du-used-space-program)))
           (prep (make-progress-reporter
@@ -647,7 +646,8 @@ The return value is an alist (DIRNAME . SIZE)."
                      (let ((buff (current-buffer)))
                        (dired-du-run-in-parallel
                         (dired-shell-stuff-it
-                         command files 'on-each) buff)
+                         command files 'on-each)
+                        buff)
                        (let ((proc (get-buffer-process buff)))
                          ;; wait until all files processed.
                          (while (eq (process-status proc) 'run)
@@ -797,7 +797,7 @@ performance reasons."
                  (mapcar (lambda (x) (cons (car x) nil)) subdir-alist)))
           ((> num-subdirs ; add missing subdirs.
               (length dired-du-dir-info))
-           (let ((subdirs (mapcar 'car subdir-alist)))
+           (let ((subdirs (mapcar #'car subdir-alist)))
              (dolist (dir subdirs)
                (unless (assoc-string dir dired-du-dir-info)
                  (push (list dir) dired-du-dir-info)))))
@@ -1358,12 +1358,10 @@ Return nil."
 
 ;;; Change format of file sizes.
 
-(defun dired-du--revert (&optional ignore-auto noconfirm preserve-modes)
+(defun dired-du--revert (orig-fun &rest args)
   "Revert current dired buffer.
 Arguments IGNORE-AUTO, NOCONFIRM and PRESERVE-MODES are ignored."
-  (let ((switches dired-actual-switches)
-        proc)
-    (ignore ignore-auto noconfirm preserve-modes)
+  (let ((switches dired-actual-switches))
     (when (string-match "--human-readable" switches)
       (setq switches (replace-match "" t t switches)))
     (setq switches (apply #'string (delete ?h (string-to-list switches)))
@@ -1372,11 +1370,12 @@ Arguments IGNORE-AUTO, NOCONFIRM and PRESERVE-MODES are ignored."
                      switches))
     (let ((dired-actual-switches switches)
           (prep (make-progress-reporter "Wait until find process finish")))
-      (dired-revert)
-      (setq proc (get-buffer-process (current-buffer)))
-      (while (and proc (memq 'run (process-status proc)))
-        (progress-reporter-update prep)
-        (sleep-for 1))))
+      (apply orig-fun args)
+      (let ((proc (get-buffer-process (current-buffer))))
+        (while (and proc (memq 'run (process-status proc)))
+          (progress-reporter-update prep)
+          ;; FIXME: (accept-process-output proc 1)?
+          (sleep-for 1)))))
   (dired-du--replace))
 
 (defun dired-du--change-human-sizes (&optional human-readable)
@@ -1411,7 +1410,7 @@ requires revert buffer.  Revert? ")))
       (setq res t)
       (save-excursion
         (let* ((max-lens     (make-list 4 0))
-               (subdirs      (mapcar 'car dired-subdir-alist))
+               (subdirs      (mapcar #'car dired-subdir-alist))
                (num-subdirs  (length subdirs))
                (counter      0)
                (done         nil)
@@ -1489,13 +1488,15 @@ comma separator..."))
                                      fmt
                                      (cond ((eq t human-readable) size-human)
                                            ((null human-readable) size-no-human)
-                                           (t size-comma))))) nil)))))
+                                           (t size-comma)))))
+                                 nil)))))
                   (dired-du-with-saved-marks
                    (save-excursion
                      (dired-du-unmark-buffer)
                      (dired-du-mark-subdir-files nil 'must-exist)
                      (dired-du-map-over-marks (funcall fn) nil nil nil))))))
-            (progress-reporter-done prep))))) res))
+            (progress-reporter-done prep)))))
+    res))
 
 (defun dired-du--toggle-human-readable (&optional no-message)
   "Toggle to show file sizes with human readable string in Dired buffers.
@@ -1622,14 +1623,14 @@ If no marked files, update the file at point."
            (info (list (dired-du-get-file-info))))
        (dired-du--global-update-dir-info info pos))
      nil))
-  (dired-du--revert))
+  (funcall revert-buffer-function))
 
 (defun dired-du--drop-unexistent-files ()
   "Remove from `dired-du-dir-info' records of unexistent files."
   (when (or (not dired-du-find-dired-buffer)
             (and dired-du-find-dired-buffer
                  dired-du-on-find-dired-ok))
-    (let ((subdirs (mapcar 'car dired-subdir-alist)))
+    (let ((subdirs (mapcar #'car dired-subdir-alist)))
       (save-excursion
         (dolist (dir subdirs)
           (let* ((glob-pos  (dired-du--subdir-position dir))
@@ -1942,7 +1943,7 @@ Return file info for current subdir."
     (unless dired-du-mode
       (error "Recursive dir sizes is disabled: \
 Use `dired-du-mode' to enable it"))
-    (let ((subdirs (mapcar 'car dired-subdir-alist))
+    (let ((subdirs (mapcar #'car dired-subdir-alist))
           empty-info result)
       (dired-du-with-saved-marks
        (save-excursion
@@ -1989,25 +1990,30 @@ in a Dired buffer might be slow; thus, it may significantly delay
 the time to display a new Dired buffer.
 
 Instead of enabling `dired-du-mode' by default in all Dired buffers
-you might prefer to use this mode as a convenient interfaz to
+you might prefer to use this mode as a convenient interface to
 the `du' program: just enable it in the current Dired buffer,
 and disable it once you have finished checking the used space."
-  :init-value nil
-  :lighter (:eval (if dired-du-mode
-                      " Dired-du"
-                    ""))
-  :keymap nil
+  ;; FIXME: Is this intended to be a global or local minor-mode?  The paragraph
+  ;; above makes it sound like it's intended to be local, but the code below
+  ;; tries to have a global effect, yet the dired-du-mode var itself is
+  ;; buffer-local and you use a hook on dired-mode-hook to enable the mode
+  ;; every time we enter dired-mode.
+  :lighter " Dired-du"
   :variable dired-du-mode
   ;; Propagate the state to all Dired buffers.
   ;; Only the current buffer is reverted.
+  ;; FIXME: I don't see any code that causes the buffer to be reverted?
+  ;; FIXME: Why is the code below in `after-hook'?
   :after-hook (let ((state dired-du-mode))
                 (dolist (buff dired-buffers)
                   (with-current-buffer (cdr buff)
                     (force-mode-line-update)
                     (setq dired-du-mode state)
-                    (setq revert-buffer-function
-                          (or (and state #'dired-du--revert)
-                              #'dired-revert)))))
+                    (if state
+                        (add-function :around (local 'revert-buffer-function)
+                                      #'dired-du--revert)
+                      (remove-function (local 'revert-buffer-function)
+                                      #'dired-du--revert)))))
 
   ;; If `major-mode' not dired mode, set `dired-du-mode' nil and exit.
   (unless (derived-mode-p 'dired-mode)
@@ -2101,7 +2107,8 @@ Optional arg ALL-MARKS, if non-nil, acept all mark characters."
                     (lambda (x)
                       (let ((basename (file-name-nondirectory x)))
                         (and (dired-du--file-in-dir-info-p x info)
-                             (not (member basename '("." "..")))))) files))
+                             (not (member basename '("." ".."))))))
+                    files))
                   (num-files   (length files))
                   (collect-str "Dired-Du catching file info ...")
                   (progress-reporter-collect
@@ -2199,7 +2206,8 @@ Please, consider install a 'du' executable suitable to your platform.")
                                (unless (dired-du-directory-at-current-line-p)
                                  (dired-du-get-file-info))
                                nil nil 'distinguish-one-marked mark all-marks)))
-                       (info (dired-du-distinguish-one-marked info))) info))))
+                       (info (dired-du-distinguish-one-marked info)))
+                  info))))
              ;; (info (delq nil (dired-du-map-over-marks
              ;;                  (if (and (dired-du-directory-at-current-line-p)
              ;;                           include-dirs)
@@ -2236,7 +2244,8 @@ Please, consider install a 'du' executable suitable to your platform.")
                                                 glob-pos)))
                                 (or (and size
                                          (dired-du-string-to-number size))
-                                    0))) dirs))))
+                                    0)))
+                            dirs))))
                      (setq total-size
                            (+ total-size (* scale-factor dirs-size)))))
                   (t ; Get size dir with `dired-du-dir-info'.
@@ -2247,7 +2256,8 @@ Please, consider install a 'du' executable suitable to your platform.")
                               (save-excursion
                                 (or (and (dired-goto-file fullname)
                                          (dired-du-get-recursive-dir-size))
-                                    0))) dirs))
+                                    0)))
+                            dirs))
                           (dirs-size (apply #'+ sizes)))
                      (setq total-size
                            (+ total-size (* scale-factor dirs-size))))))))
@@ -2366,7 +2376,7 @@ with total size %s%s%s\n"
     (unwind-protect
         (save-excursion
           (when dired-du (dired-du-mode -1))
-          (mapc 'dired-maybe-insert-subdir (dired-du-get-marked-files)))
+          (mapc #'dired-maybe-insert-subdir (dired-du-get-marked-files)))
       (when dired-du (dired-du-mode)))))
 
 (defun dired-du-drop-all-subdirs ()
