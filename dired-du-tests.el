@@ -1,6 +1,6 @@
 ;;; dired-du-tests.el --- Tests for dired-du.el  -*- lexical-binding: t; -*-
 
-;; Copyright (C) 2017 Free Software Foundation, Inc.
+;; Copyright (C) 2016-2019 Free Software Foundation, Inc.
 
 ;; Author: Tino Calancha <tino.calancha@gmail.com>,
 ;; Keywords:
@@ -28,6 +28,7 @@
 
 (require 'ert)
 (require 'dired-du)
+(require 'ls-lisp)
 
 (ert-deftest dired-du-test1 ()
   (let* ((dir (make-temp-file "dired-du" 'dir))
@@ -229,6 +230,51 @@
       (if mode-on
           (dired-du-mode 1)
         (dired-du-mode 0))
+      (mapc #'kill-buffer buffers)
+      (delete-directory dir 'recursive))))
+
+;; Sort by size only supported in `ls-lisp'.
+(ert-deftest dired-du-sort-by-size ()
+  "Test ls-lisp sort by size with recursive size dir feature."
+  (let* ((dir (make-temp-file "dired-du" 'dir))
+         (filled-subdir (expand-file-name "filled-subdir" dir))
+         (empty-subdir (expand-file-name "empty-subdir" dir))
+         (external-file (expand-file-name "external-file" dir))
+         (inner-file (expand-file-name "inner-file" filled-subdir))
+         (ls-lisp-use-insert-directory-program nil)
+         (orig-def-dir default-directory)
+         (dired-listing-switches "-lS")
+         (buffers '()) mode-on)
+    (unwind-protect
+        (let (filled-subdir-size empty-subdir-size file-size)
+          (make-directory filled-subdir)
+          (make-directory empty-subdir)
+          (setq default-directory dir)
+          (add-to-list 'buffers (dired dir))
+          (dired dir)
+          (setq empty-subdir-size (dired-du--get-recursive-dir-size "empty-subdir"))
+          (setq file-size (* empty-subdir-size 2))
+          (setq filled-subdir-size (+ empty-subdir-size file-size))
+          (dolist (file (list external-file inner-file))
+            (write-region (make-string file-size ?.) nil file))
+          (dired-revert) ; Revert to show external-file
+          (setq filled-subdir-size (dired-du--get-recursive-dir-size "filled-subdir"))
+          (setq mode-on dired-du-mode)
+          (dired-du-mode 1)
+          ;; Enable the mode just replace the recursive dir sizes; it won't reorder the Dired buffer.
+          ;; Revert the buffer to force a reorder.
+          (dired-revert)
+          ;; At this point, the Dired buffer must be ordered by size as follows:
+          ;; file/dir name        size
+          ;; filled-subdir        3x
+          ;; external-file        2x
+          ;; empty subdir         x
+          (dired-toggle-marks)
+          (should (equal '("filled-subdir" "external-file" "empty-subdir")
+                         (dired-get-marked-files 'local))))
+      (if mode-on (dired-du-mode 1)
+        (dired-du-mode 0))
+      (setq default-directory orig-def-dir)
       (mapc #'kill-buffer buffers)
       (delete-directory dir 'recursive))))
 

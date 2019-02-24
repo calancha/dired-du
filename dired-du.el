@@ -1,17 +1,17 @@
 ;;; dired-du.el --- Dired with recursive directory sizes -*- lexical-binding: t -*-
 
-;; Copyright (C) 2016-2018 Free Software Foundation, Inc.
+;; Copyright (C) 2016-2019 Free Software Foundation, Inc.
 
 ;; Author: Tino Calancha <tino.calancha@gmail.com>
 ;; Maintainer: Tino Calancha <tino.calancha@gmail.com>
 ;; Keywords: files, unix, convenience
 
 ;; Created: Wed Mar 23 22:54:00 2016
-;; Version: 0.5.1
+;; Version: 0.5.2
 ;; Package-Requires: ((emacs "24.4") (cl-lib "0.5"))
-;; Last-Updated: Mon Oct 01 17:40:32 JST 2018
+;; Last-Updated: Sun Feb 24 19:53:27 JST 2019
 ;;           By: calancha
-;;     Update #: 341
+;;     Update #: 344
 ;; Compatibility: GNU Emacs: 24.4
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -72,7 +72,13 @@
 ;;
 ;; Bugs
 ;; ====
-;; Some progress reporter might show percent > 100.
+;; * Some progress reporter might show percent > 100.
+;;
+;; * Order by size only works with directory recursive sizes if you use
+;;   `ls-lisp' with `ls-lisp-use-insert-directory-program' set nil; otherwise,
+;;   the external ls program is responsible to do the sorting ignoring
+;;   the recursive dir sizes.
+;;
 ;;
 ;;  Internal variables defined here:
 ;;
@@ -109,12 +115,13 @@
 ;;   `dired-du--get-all-files-type',
 ;;   `dired-du--get-max-gid-and-size-lengths-for-subdir',
 ;;   `dired-du--get-num-extra-blanks', `dired-du--get-position',
-;;   `dired-du--get-position-1', `dired-du--get-value',
-;;   `dired-du--global-update-dir-info', `dired-du--initialize',
-;;   `dired-du--insert-subdir', `dired-du--local-update-dir-info',
-;;   `dired-du--number-as-string-p', `dired-du--read-size-from-buffer',
-;;   `dired-du--replace', `dired-du--replace-1',
-;;   `dired-du--reset', `dired-du--revert',
+;;   `dired-du--get-position-1', `dired-du--get-recursive-dir-size',
+;;   `dired-du--get-value', `dired-du--global-update-dir-info',
+;;   `dired-du--initialize', `dired-du--insert-subdir',
+;;   `dired-du--local-update-dir-info', `dired-du--number-as-string-p',
+;;   `dired-du--read-size-from-buffer', `dired-du--replace',
+;;   `dired-du--replace-1', `dired-du--reset',
+;;   `dired-du--revert', `dired-du--size-sorter',
 ;;   `dired-du--subdir-position', `dired-du--update-subdir-header',
 ;;   `dired-du--update-subdir-header-1', `dired-du-alist-get',
 ;;   `dired-du-directory-at-current-line-p',
@@ -126,7 +133,8 @@
 ;;   `dired-du-get-all-subdir-non-directories', `dired-du-get-file-info',
 ;;   `dired-du-get-file-size-local', `dired-du-get-file-size-remote',
 ;;   `dired-du-get-marked-files', `dired-du-get-recursive-dir-size',
-;;   `dired-du-get-recursive-dir-size-in-parallel', `dired-du-mark-buffer',
+;;   `dired-du-get-recursive-dir-size-in-parallel',
+;;   `dired-du-ls-lisp-handle-switches', `dired-du-mark-buffer',
 ;;   `dired-du-mark-subdir-files', `dired-du-marker-regexp',
 ;;   `dired-du-run-in-parallel', `dired-du-string-to-number',
 ;;   `dired-du-unmark-buffer', `dired-du-use-comma-separator'.
@@ -566,41 +574,46 @@ Otherwise use the file at the current line in the Dired buffer."
         (dired-du-string-to-number
          (buffer-substring-no-properties (point) pos))))))
 
+
+(defun dired-du--get-recursive-dir-size (dir-rel)
+  "Return recursive directory size for DIR-REL."
+  (let ((size 0)
+        (dired-buffer (current-buffer)))
+    (with-temp-buffer
+      (if dired-du-used-space-program
+          (process-file (car dired-du-used-space-program)
+                        nil t nil
+                        (cadr dired-du-used-space-program)
+                        dir-rel)
+        ;; `du' not available: estimate the size with Lisp as
+        ;; the size of all the regular files under this dir.  This is
+        ;; an underestimation, but it's OK for most of the cases.
+        (require 'find-lisp)
+        (with-no-warnings
+          (let* ((files (ignore-errors ; Ignore permission denied errors.
+                          (find-lisp-find-files dir-rel "")))
+                 (tmp (if (null files)
+                          (with-current-buffer dired-buffer
+                            (dired-du--read-size-from-buffer))
+                        (apply #'+ (mapcar
+                                    (lambda (f)
+                                      (dired-du-size
+                                       (file-attributes f)))
+                                    files)))))
+            (insert (format "%d" tmp)))))
+      (goto-char 1)
+      (while (re-search-forward "^[0-9]+" nil t)
+        (setq size (+ size (string-to-number (match-string 0))))))
+    size))
+
 (defun dired-du-get-recursive-dir-size ()
   "Return recursive directory size for dir at current line.
 If there is not a directory in the current line return nil."
   (dired-du-assert-dired-mode)
   (when (dired-du-directory-at-current-line-p)
     ;; remote files need relative name.
-    (let ((dir-rel (dired-get-filename t 'noerror))
-          (size 0)
-          (dired-buffer (current-buffer)))
-      (with-temp-buffer
-        (if dired-du-used-space-program
-            (process-file (car dired-du-used-space-program)
-                          nil t nil
-                          (cadr dired-du-used-space-program)
-                          dir-rel)
-          ;; `du' not available: estimate the size with Lisp as
-          ;; the size of all the regular files under this dir.  This is
-          ;; an underestimation, but it's OK for most of the cases.
-          (require 'find-lisp)
-          (with-no-warnings
-            (let* ((files (ignore-errors ; Ignore permission denied errors.
-                            (find-lisp-find-files dir-rel "")))
-                   (tmp (if (null files)
-                            (with-current-buffer dired-buffer
-                              (dired-du--read-size-from-buffer))
-                          (apply #'+ (mapcar
-                                      (lambda (f)
-                                        (dired-du-size
-                                         (file-attributes f)))
-                                      files)))))
-              (insert (format "%d" tmp)))))
-        (goto-char 1)
-        (while (re-search-forward "^[0-9]+" nil t)
-          (setq size (+ size (string-to-number (match-string 0))))))
-      size)))
+    (let ((dir-rel (dired-get-filename t 'noerror)))
+      (dired-du--get-recursive-dir-size dir-rel))))
 
 (defun dired-du-run-in-parallel (command out-buf)
   "Run COMMAND for several files in parallel.
@@ -1970,6 +1983,91 @@ Use `dired-du-mode' to enable it"))
         (dired-insert-set-properties (point-min) (point-max))))))
 
 
+;;; Handle sort_by_size for directories as well.
+;; Note this is only supported for `ls-lisp'.
+
+(defun dired-du--size-sorter ()
+  "Return sorter by size used by `dired-du-ls-lisp-handle-switches'."
+  (let ((size-fn
+         (lambda (file-alist)
+           (let ((file (car file-alist))
+                 (is-dir (eq t (cadr file-alist)))
+                 (attrb (cdr file-alist)))
+             ;; dired-du ignores "." and ".." entries: use `file-attribute-size' in that case.
+             (if (and is-dir (not (member file '("." ".."))))
+                 (if (assoc file (cdar dired-du-dir-info)) ; Usea cached value if available
+                     (dired-du-string-to-number (dired-du--get-value file 'size))
+                   (dired-du--get-recursive-dir-size file))
+               (dired-du-size attrb))))))
+    (lambda (x y) ; sorted on size
+	  ;; Make largest file come first
+	  (< (funcall size-fn y) (funcall size-fn x)))))
+
+(defun dired-du-ls-lisp-handle-switches (file-alist switches)
+  "Advice on `ls-lisp-handle-switches to support sort_by_size on dirs.
+
+This function only has effect if you set `ls-lisp-use-insert-directory-program' nil.
+Note that if you are using `insert-directory-program' instead, then such a program
+is responsible to do the sorting, and it won't see the recursives sizes
+calculated by this library."
+  ;; FILE-ALIST's elements are (FILE . FILE-ATTRIBUTES).
+  (or (memq ?U switches)		; unsorted
+      ;; Catch and ignore unexpected sorting errors
+      (condition-case err
+	  (setq file-alist
+		(let (index)
+		  ;; Copy file-alist in case of error
+		  (sort (copy-sequence file-alist) ; modifies its argument!
+			    (cond ((memq ?S switches)
+                       (dired-du--size-sorter))
+			      ((setq index (ls-lisp-time-index switches))
+			       (lambda (x y) ; sorted on time
+				 (time-less-p (nth index (cdr y))
+					      (nth index (cdr x)))))
+			      ((memq ?X switches)
+			       (lambda (x y) ; sorted on extension
+				 (ls-lisp-string-lessp
+				  (ls-lisp-extension (car x))
+				  (ls-lisp-extension (car y)))))
+			      ((memq ?v switches)
+			       (lambda (x y) ; sorted by version number
+				 (ls-lisp-version-lessp (car x) (car y))))
+			      (t
+			       (lambda (x y) ; sorted alphabetically
+				 (ls-lisp-string-lessp (car x) (car y))))))))
+	(error (message "Unsorted (ls-lisp sorting error) - %s"
+			(error-message-string err))
+	       (ding) (sit-for 2))))	; to show user the message!
+  (if (memq ?F switches)		; classify switch
+      (setq file-alist (mapcar 'ls-lisp-classify file-alist)))
+  (if ls-lisp-dirs-first
+  ;; Re-sort directories first, without otherwise changing the
+  ;; ordering, and reverse whole list.  cadr of each element of
+  ;; `file-alist' is t for directory, string (name linked to) for
+  ;; symbolic link, or nil.
+      (let (el dirs files)
+	(while file-alist
+	  (if (or (eq (cadr (setq el (car file-alist))) t) ; directory
+                  (and (stringp (cadr el))
+                       (file-directory-p (cadr el)))) ; symlink to a directory
+	      (setq dirs (cons el dirs))
+	    (setq files (cons el files)))
+	  (setq file-alist (cdr file-alist)))
+	(setq file-alist
+	      (if (memq ?U switches)	; unsorted order is reversed
+		  (nconc dirs files)
+		(nconc files dirs)
+		))))
+  ;; Finally reverse file alist if necessary.
+  ;; (eq below MUST compare `(not (memq ...))' to force comparison of
+  ;; t or nil, rather than list tails!)
+  (if (eq (eq (not (memq ?U switches))	; unsorted order is reversed
+	      (not (memq ?r switches)))	; reversed sort order requested
+	  ls-lisp-dirs-first)		; already reversed
+      (nreverse file-alist)
+    file-alist))
+
+
 ;;; Define minor mode.
 
 ;;;###autoload
@@ -2020,13 +2118,14 @@ and disable it once you have finished checking the used space."
     (error "Dired-Du: Buffer not a Dired buffer"))
   (cond (dired-du-mode
          (advice-add 'find-dired-sentinel :around #'dired-du--find-dired-around)
-
+         (advice-add 'ls-lisp-handle-switches :override 'dired-du-ls-lisp-handle-switches)
          (add-hook 'dired-before-readin-hook #'dired-du--drop-unexistent-files)
          (add-hook 'dired-after-readin-hook #'dired-du--replace 'append)
          (add-hook 'dired-du-mode-hook #'dired-du--initialize)
          (add-hook 'dired-mode-hook #'dired-du-mode))
         (t
          (advice-remove 'find-dired-sentinel #'dired-du--find-dired-around)
+         (advice-remove 'ls-lisp-handle-switches #'dired-du-ls-lisp-handle-switches)
          (remove-hook 'dired-before-readin-hook
                       #'dired-du--drop-unexistent-files)
          (remove-hook 'dired-after-readin-hook #'dired-du--replace)
