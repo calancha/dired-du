@@ -8,9 +8,9 @@
 ;; Created: Wed Mar 23 22:54:00 2016
 ;; Version: 0.5.2
 ;; Package-Requires: ((emacs "24.4") (cl-lib "0.5"))
-;; Last-Updated: Sun Feb 24 17:36:44 JST 2019
+;; Last-Updated: Sun Feb 24 19:53:27 JST 2019
 ;;           By: calancha
-;;     Update #: 343
+;;     Update #: 344
 ;; Compatibility: GNU Emacs: 24.4
 ;; Keywords: files, unix, convenience
 ;;
@@ -1998,7 +1998,7 @@ Use `dired-du-mode' to enable it"))
                  (if (assoc file (cdar dired-du-dir-info)) ; Usea cached value if available
                      (dired-du-string-to-number (dired-du--get-value file 'size))
                    (dired-du--get-recursive-dir-size file))
-               (file-attribute-size attrb))))))
+               (dired-du-size attrb))))))
     (lambda (x y) ; sorted on size
 	  ;; Make largest file come first
 	  (< (funcall size-fn y) (funcall size-fn x)))))
