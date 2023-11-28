@@ -153,6 +153,8 @@
 (require 'cl-lib)
 (require 'dired)
 (require 'find-dired)
+(require 'ls-lisp)
+
 (autoload 'dired-subdir-min "dired-aux")
 
 (defgroup dired-du nil
